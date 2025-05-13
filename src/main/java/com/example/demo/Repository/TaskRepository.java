@@ -9,5 +9,4 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     List<Task> findByClientInn(Long clientInn);
 
-    void deleteByClientInn(Long inn);
 }

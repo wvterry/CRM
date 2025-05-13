@@ -1,13 +1,13 @@
 package com.example.demo.Service;
 
-import com.example.demo.DTO.ClientWithTasksDTO;
+import com.example.demo.DTO.*;
+import com.example.demo.Exception.ClientNotFoundException;
+import com.example.demo.Mapper.ClientMapper;
 import com.example.demo.Model.Client;
-import com.example.demo.Model.Task;
 import com.example.demo.Repository.ClientRepository;
 import com.example.demo.Repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -17,67 +17,55 @@ import java.util.Optional;
 public class ClientService {
 
     private final ClientRepository clientRepository;
-    private final TaskRepository taskRepository;
+    private final ClientMapper clientMapper;
+
 
     @Autowired
-    public ClientService(ClientRepository clientRepository, TaskRepository taskRepository){
+    public ClientService(ClientRepository clientRepository, ClientMapper clientMapper){
         this.clientRepository = clientRepository;
-        this.taskRepository = taskRepository;
+        this.clientMapper = clientMapper;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClientInfoResponseDTO> getAllClients(){
+        return clientRepository.findAll().stream().map(clientMapper::toClientInfoResponseDTO).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ClientResponseDTO getClientByInn(Long inn){
+        Client client = clientRepository
+                .findByInn(inn)
+                .orElseThrow(() -> new ClientNotFoundException("Клиент с ИНН " + inn + " не найден"));
+        return clientMapper.toClientResponseDTOFromClient(client);
     }
 
     @Transactional
-    public List<Client> getAllClients(){
-        return clientRepository.findAll();
-    }
-
-    @Transactional
-    public Optional<Client> getClientByInn(Long inn){
-        return clientRepository.findByInn(inn);
-    }
-
-    @Transactional
-    public Client saveClient(Client client){
-        return clientRepository.save(client);
+    public Long saveClient(CreateClientDTO createClientDTO){
+        clientRepository.save(clientMapper.toClient(createClientDTO));
+        return createClientDTO.getInn();
     }
 
     @Transactional
     public void deleteClientByInn(Long inn){
-        clientRepository.deleteByInn(inn);
-    }
-
-    @Transactional
-    public void deleteClientAndHisTasks(Long inn){
-        Client client = clientRepository.findByInn(inn).orElseThrow(() -> new RuntimeException("Клиент с таким ИНН не найден"));
-        taskRepository.deleteByClientInn(inn);
-        clientRepository.deleteByInn(inn);
-    }
-
-    @Transactional
-    public List<ClientWithTasksDTO> getAllClientsAndTheirTasks(){
-        return clientRepository.findAllClientsWithTasks().stream().map(this::mapToClientWithTasksDTO).toList();
-    }
-
-    private ClientWithTasksDTO mapToClientWithTasksDTO(Client client) {
-        ClientWithTasksDTO clientWithTasksDTO = new ClientWithTasksDTO();
-        clientWithTasksDTO.setInn(client.getInn());
-        clientWithTasksDTO.setName(client.getName());
-        clientWithTasksDTO.setClientType(client.getClientType());
-
-        if (client.getTasks() != null && !client.getTasks().isEmpty()){
-            List<ClientWithTasksDTO.TaskDTO> taskDTOS = client
-                    .getTasks()
-                    .stream()
-                    .map(task -> {
-                        ClientWithTasksDTO.TaskDTO taskDTO = new ClientWithTasksDTO.TaskDTO();
-                        taskDTO.setId(task.getId());
-                        taskDTO.setTitle(task.getTitle());
-                        taskDTO.setDescription(task.getDescription());
-                        taskDTO.setTaskStatus(task.getTaskStatus());
-                        taskDTO.setCreatedAt(task.getCreatedAt());
-                        return taskDTO;
-                    }).toList();
-            clientWithTasksDTO.setTasks(taskDTOS);
+        Optional<Client> clientForDelete = clientRepository.findByInn(inn);
+        if (clientForDelete.isEmpty()){
+            throw new ClientNotFoundException("Клиент с ИНН " + inn + " не найден");
         }
-        return clientWithTasksDTO;
+        clientRepository.deleteByInn(inn);
+    }
+
+    @Transactional(readOnly = true)
+    public ClientWithTasksDTO getClientsAndHisTasks(Long inn){
+        Client client = clientRepository.findByInn(inn).orElseThrow(() -> new ClientNotFoundException("Клиент с ИНН " + inn + " не найден"));
+      return clientMapper.toClientAndHisTasksDTO(client);
+    }
+
+    @Transactional
+    public ClientResponseDTO updateClient(Long inn, ClientForUpdateDTO clientForUpdateDTO){
+        Client clientForUpdate = clientRepository
+                .findByInn(inn)
+                .orElseThrow(() -> new ClientNotFoundException("Клиент с ИНН " + inn + " не найден"));
+        clientRepository.save(clientMapper.toClientFromClientForUpdateDTO(clientForUpdate, clientForUpdateDTO));
+        return clientMapper.toClientResponseDTOFromClient(clientForUpdate);
     }
 }

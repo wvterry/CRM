@@ -2,7 +2,6 @@ package com.example.demo.DTO;
 
 
 import com.example.demo.Enum.ClientType;
-import com.fasterxml.jackson.annotation.JsonRawValue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,9 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class ClientDTO {
+public class ClientInfoResponseDTO {
 
-    private String inn;
+    private Long inn;
 
     private String name;
 

@@ -38,4 +38,10 @@ public class Client {
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Task> tasks = new ArrayList<>();
+
+    public Client(Long inn, String name, ClientType clientType) {
+        this.inn = inn;
+        this.name = name;
+        this.clientType = clientType;
+    }
 }
