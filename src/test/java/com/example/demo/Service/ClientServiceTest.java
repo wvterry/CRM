@@ -25,6 +25,48 @@ import java.util.Optional;
 
 public class ClientServiceTest {
 
+    private static final Long CLIENT_INN_555 = 555L;
+    private static final Long CLIENT_INN_666 = 666L;
+
+    private static final Client CLIENT_555 = new Client(
+            CLIENT_INN_555,
+            "Test1",
+            "88005553535",
+            "test@test.ru",
+            "Test street",
+            ClientType.LEGAL_ENTITY,
+            List.of());
+
+    private static final Client CLIENT_666 = new Client(
+            CLIENT_INN_666,
+            "Test2",
+            "88007008000",
+            "test1@test.ru",
+            "Test1 street",
+            ClientType.LEGAL_ENTITY,
+            List.of()
+    );
+
+    private static final ClientResponseDTO CLIENT_RESPONSE_DTO_555 = new ClientResponseDTO(
+            "Test1", "88005553535", "test@test.ru", "Test street", ClientType.LEGAL_ENTITY
+    );
+
+    private static final CreateClientDTO CREATE_CLIENT_DTO_555 = new CreateClientDTO(
+            CLIENT_INN_555, "Test1", ClientType.LEGAL_ENTITY
+    );
+
+    private static final ClientForUpdateDTO CLIENT_FOR_UPDATE_DTO = new ClientForUpdateDTO(
+            "Test", "88005553535", "test@test.ru", "Test street"
+    );
+
+    private static final ClientInfoResponseDTO CLIENT_INFO_RESPONSE_DTO_555 = new ClientInfoResponseDTO(
+            555L, "Test1", ClientType.LEGAL_ENTITY
+    );
+
+    private static final ClientInfoResponseDTO CLIENT_INFO_RESPONSE_DTO_666 = new ClientInfoResponseDTO(
+            666L, "Test2", ClientType.LEGAL_ENTITY
+    );
+
     @InjectMocks
     private ClientService clientService;
 
@@ -41,182 +83,152 @@ public class ClientServiceTest {
 
     @Test
     void testGetAllClients(){
-        Client client1 = new Client(555L, "Test1",
-                "88005553535", "test@test.ru", "Test street", ClientType.LEGAL_ENTITY, List.of());
 
-        Client client2 = new Client(666L, "Test2",
-                "88007008000", "test1@test.ru","Test1 street", ClientType.LEGAL_ENTITY, List.of());
+        // Arrange
+        when(clientRepository.findAll()).thenReturn(List.of(CLIENT_555, CLIENT_666));
+        when(clientMapper.toClientInfoResponseDTO(CLIENT_555)).thenReturn(CLIENT_INFO_RESPONSE_DTO_555);
+        when(clientMapper.toClientInfoResponseDTO(CLIENT_666)).thenReturn(CLIENT_INFO_RESPONSE_DTO_666);
 
-        ClientInfoResponseDTO clientInfoResponseDTO1 = new ClientInfoResponseDTO(555L, "Test1", ClientType.LEGAL_ENTITY);
-
-        ClientInfoResponseDTO clientInfoResponseDTO2 = new ClientInfoResponseDTO(666L, "Test2", ClientType.LEGAL_ENTITY);
-
-        when(clientRepository.findAll()).thenReturn(List.of(client1, client2));
-
-        when(clientMapper.toClientInfoResponseDTO(client1)).thenReturn(clientInfoResponseDTO1);
-        when(clientMapper.toClientInfoResponseDTO(client2)).thenReturn(clientInfoResponseDTO2);
-
+        // Act
         List<ClientInfoResponseDTO> result = clientService.getAllClients();
 
+        // Assert
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertEquals(clientInfoResponseDTO1, result.get(0));
-        assertEquals(clientInfoResponseDTO2, result.get(1));
-
+        assertEquals(CLIENT_INFO_RESPONSE_DTO_555, result.get(0));
+        assertEquals(CLIENT_INFO_RESPONSE_DTO_666, result.get(1));
         verify(clientRepository).findAll();
-        verify(clientMapper).toClientInfoResponseDTO(client1);
-        verify(clientMapper).toClientInfoResponseDTO(client2);
+        verify(clientMapper).toClientInfoResponseDTO(CLIENT_555);
+        verify(clientMapper).toClientInfoResponseDTO(CLIENT_666);
     }
 
     @Test
     void testGetClientByInn_ClientExist(){
-        Long inn = 666L;
-        Client client1 = new Client(inn, "Test1",
-                "88005553535", "test@test.ru", "Test street", ClientType.LEGAL_ENTITY, List.of());
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.of(CLIENT_555));
+        when(clientMapper.toClientResponseDTOFromClient(CLIENT_555)).thenReturn(CLIENT_RESPONSE_DTO_555);
 
-        ClientResponseDTO clientResponseDTO = new ClientResponseDTO("Test1", "8800700800",
-                "test@test.ru", "Test street", ClientType.LEGAL_ENTITY);
+        // Act
+        ClientResponseDTO result = clientService.getClientByInn(CLIENT_INN_555);
 
-        when(clientRepository.findByInn(inn)).thenReturn(Optional.of(client1));
-        when(clientMapper.toClientResponseDTOFromClient(client1)).thenReturn(clientResponseDTO);
-
-        ClientResponseDTO result = clientService.getClientByInn(inn);
-
+        // Assert
         assertNotNull(result);
-        assertEquals(result, clientResponseDTO);
-        verify(clientRepository).findByInn(inn);
-        verify(clientMapper).toClientResponseDTOFromClient(client1);
+        assertEquals(result, CLIENT_RESPONSE_DTO_555);
+        verify(clientRepository).findByInn(CLIENT_INN_555);
+        verify(clientMapper).toClientResponseDTOFromClient(CLIENT_555);
     }
 
     @Test
     void testGetClientByInn_ClientNotFound_Exception(){
-        Long inn = 666L;
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.empty());
 
-        when(clientRepository.findByInn(inn)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> clientService.getClientByInn(inn));
-        verify(clientRepository).findByInn(inn);
+        // Assert
+        assertThrows(NotFoundException.class, () -> clientService.getClientByInn(CLIENT_INN_555));
+        verify(clientRepository).findByInn(CLIENT_INN_555);
     }
 
     @Test
     void testSaveClient(){
-        Long inn = 555L;
-        CreateClientDTO createClientDTO = new CreateClientDTO(555L, "Test", ClientType.LEGAL_ENTITY);
-        Client client1 = new Client(555L, "Test",
-                "88005553535", "test@test.ru", "Test street", ClientType.LEGAL_ENTITY, List.of());
+        // Arrange
+        when(clientMapper.toClient(CREATE_CLIENT_DTO_555)).thenReturn(CLIENT_555);
 
-        when(clientMapper.toClient(createClientDTO)).thenReturn(client1);
+        // Act
+        Long result = clientService.saveClient(CREATE_CLIENT_DTO_555);
 
-        Long result = clientService.saveClient(createClientDTO);
-
+        // Assert
         assertNotNull(result);
-        assertEquals(inn, result);
-        verify(clientMapper).toClient(createClientDTO);
-        verify(clientRepository).save(client1);
+        assertEquals(CLIENT_INN_555, result);
+        verify(clientMapper).toClient(CREATE_CLIENT_DTO_555);
+        verify(clientRepository).save(CLIENT_555);
     }
 
     @Test
     void testDeleteClientByInn_ClientExist(){
-        Long inn = 555L;
-        Client client1 = new Client(555L, "Test",
-                "88005553535", "test@test.ru", "Test street", ClientType.LEGAL_ENTITY, List.of());
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.of(CLIENT_555));
 
-        when(clientRepository.findByInn(inn)).thenReturn(Optional.of(client1));
+        // Act
+        clientService.deleteClientByInn(CLIENT_INN_555);
 
-        clientService.deleteClientByInn(inn);
-
-        verify(clientRepository).findByInn(inn);
-        verify(clientRepository).deleteByInn(inn);
+        // Assert
+        verify(clientRepository).findByInn(CLIENT_INN_555);
+        verify(clientRepository).deleteByInn(CLIENT_INN_555);
     }
 
     @Test
     void testDeleteClientByInn_ClientNotExist_Exception(){
-        Long inn = 555L;
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.empty());
 
-        when(clientRepository.findByInn(inn)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> clientService.deleteClientByInn(inn));
-        verify(clientRepository).findByInn(inn);
+        // Assert
+        assertThrows(NotFoundException.class, () -> clientService.deleteClientByInn(CLIENT_INN_555));
+        verify(clientRepository).findByInn(CLIENT_INN_555);
 
     }
 
     @Test
     void testGetClientsAndHisTasks_ClientExist(){
-        Long inn = 555L;
-        Client client1 = new Client();
 
         Task task1 = new Task();
         Task task2 = new Task();
-
         List<Task> tasks = List.of(task1, task2);
-
-        client1.setInn(inn);
-        client1.setName("Test");
-        client1.setPhone("88005553535");
-        client1.setEmail("test@test.ru");
-        client1.setAddress("Test street");
-        client1.setClientType(ClientType.LEGAL_ENTITY);
-        client1.setTasks(tasks);
-
+        CLIENT_555.setTasks(tasks);
         ClientWithTasksDTO.TaskDTO taskDTO1 = new ClientWithTasksDTO.TaskDTO();
         ClientWithTasksDTO.TaskDTO taskDTO2 = new ClientWithTasksDTO.TaskDTO();
-
         List<ClientWithTasksDTO.TaskDTO> taskDTOS = List.of(taskDTO1, taskDTO2);
+        ClientWithTasksDTO clientWithTasksDTO = new ClientWithTasksDTO(CLIENT_INN_555, "Test", ClientType.LEGAL_ENTITY, taskDTOS);
 
-        ClientWithTasksDTO clientWithTasksDTO = new ClientWithTasksDTO(inn, "Test", ClientType.LEGAL_ENTITY, taskDTOS);
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.of(CLIENT_555));
+        when(clientMapper.toClientAndHisTasksDTO(CLIENT_555)).thenReturn(clientWithTasksDTO);
 
-        when(clientRepository.findByInn(inn)).thenReturn(Optional.of(client1));
-        when(clientMapper.toClientAndHisTasksDTO(client1)).thenReturn(clientWithTasksDTO);
+        // Act
+        ClientWithTasksDTO result = clientService.getClientsAndHisTasks(CLIENT_INN_555);
 
-        ClientWithTasksDTO result = clientService.getClientsAndHisTasks(inn);
-
+        // Assert
         assertNotNull(result);
         assertEquals(result, clientWithTasksDTO);
-        verify(clientRepository).findByInn(inn);
-        verify(clientMapper).toClientAndHisTasksDTO(client1);
+        verify(clientRepository).findByInn(CLIENT_INN_555);
+        verify(clientMapper).toClientAndHisTasksDTO(CLIENT_555);
     }
 
     @Test
     void testGetClientsAndHisTasks_ClientNotFound_Exception(){
-        Long inn = 555L;
-        when(clientRepository.findByInn(inn)).thenReturn(Optional.empty());
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> clientService.getClientsAndHisTasks(inn));
-        verify(clientRepository).findByInn(inn);
+        // Assert
+        assertThrows(NotFoundException.class, () -> clientService.getClientsAndHisTasks(CLIENT_INN_555));
+        verify(clientRepository).findByInn(CLIENT_INN_555);
     }
 
     @Test
     void testUpdateClient_ClientExist(){
-        Long inn = 555L;
-        Client client1 = new Client(555L, "Test",
-                "88005553535", "test@test.ru", "Test street", ClientType.LEGAL_ENTITY, List.of());
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.of(CLIENT_555));
+        when(clientMapper.toClientFromClientForUpdateDTO(CLIENT_555, CLIENT_FOR_UPDATE_DTO)).thenReturn(CLIENT_555);
+        when(clientMapper.toClientResponseDTOFromClient(CLIENT_555)).thenReturn(CLIENT_RESPONSE_DTO_555);
 
-        ClientForUpdateDTO clientForUpdateDTO = new ClientForUpdateDTO("Test", "88005553535", "test@test.ru", "Test street");
-        ClientResponseDTO clientResponseDTO = new ClientResponseDTO("Test", "88005553535", "test@test.ru", "Test street", ClientType.LEGAL_ENTITY);
+        // Act
+        ClientResponseDTO result = clientService.updateClient(CLIENT_INN_555, CLIENT_FOR_UPDATE_DTO);
 
-        when(clientRepository.findByInn(inn)).thenReturn(Optional.of(client1));
-        when(clientMapper.toClientFromClientForUpdateDTO(client1, clientForUpdateDTO)).thenReturn(client1);
-        when(clientMapper.toClientResponseDTOFromClient(client1)).thenReturn(clientResponseDTO);
-
-        ClientResponseDTO result = clientService.updateClient(inn, clientForUpdateDTO);
-
-
+        // Assert
         assertNotNull(result);
-        assertEquals(result, clientResponseDTO);
-        verify(clientRepository).findByInn(inn);
-        verify(clientMapper).toClientFromClientForUpdateDTO(client1, clientForUpdateDTO);
-        verify(clientMapper).toClientResponseDTOFromClient(client1);
-        verify(clientRepository).save(client1);
+        assertEquals(result, CLIENT_RESPONSE_DTO_555);
+        verify(clientRepository).findByInn(CLIENT_INN_555);
+        verify(clientMapper).toClientFromClientForUpdateDTO(CLIENT_555, CLIENT_FOR_UPDATE_DTO);
+        verify(clientMapper).toClientResponseDTOFromClient(CLIENT_555);
+        verify(clientRepository).save(CLIENT_555);
     }
 
     @Test
     void testUpdateClient_ClientNotFound_Exception(){
-        Long inn = 555L;
-        ClientForUpdateDTO clientForUpdateDTO = new ClientForUpdateDTO();
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.empty());
 
-        when(clientRepository.findByInn(inn)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> clientService.updateClient(inn, clientForUpdateDTO));
-        verify(clientRepository).findByInn(inn);
+        // Assert
+        assertThrows(NotFoundException.class, () -> clientService.updateClient(CLIENT_INN_555, CLIENT_FOR_UPDATE_DTO));
+        verify(clientRepository).findByInn(CLIENT_INN_555);
     }
 }

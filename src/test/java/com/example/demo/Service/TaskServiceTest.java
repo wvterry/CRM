@@ -27,6 +27,59 @@ import static org.mockito.Mockito.*;
 
 public class TaskServiceTest {
 
+    private static final Long CLIENT_INN_555 = 555L;
+    private static final Long TASK_ID_1 = 1L;
+    private static final Long TASK_ID_2 = 2L;
+
+    private static final Client CLIENT_555 = new Client(
+            CLIENT_INN_555,
+            "Test Company",
+            "88005553535",
+            "test@test.ru",
+            "Test street",
+            ClientType.LEGAL_ENTITY,
+            List.of()
+    );
+
+    private static final Task TASK_1 = new Task(
+            TASK_ID_1,
+            "Task 1",
+            "Description 1",
+            CLIENT_555,
+            TaskStatus.NEW,
+            LocalDateTime.now()
+    );
+
+    private static final Task TASK_2 = new Task(
+            TASK_ID_2,
+            "Task 2",
+            "Description 2",
+            CLIENT_555,
+            TaskStatus.IN_PROGRESS,
+            LocalDateTime.now()
+    );
+
+    private static final TaskResponseDTO TASK_RESPONSE_DTO_1 = new TaskResponseDTO(
+            TASK_ID_1,
+            "Task 1",
+            "Description 1",
+            CLIENT_INN_555,
+            TaskStatus.NEW,
+            LocalDateTime.now()
+    );
+
+    private static final TaskResponseDTO TASK_RESPONSE_DTO_2 = new TaskResponseDTO(
+            TASK_ID_2,
+            "Task 2",
+            "Description 2",
+            CLIENT_INN_555,
+            TaskStatus.IN_PROGRESS,
+            LocalDateTime.now()
+    );
+
+    private static final TaskCreateDTO TASK_CREATE_DTO = new TaskCreateDTO("New Task", "New Description");
+    private static final TaskUpdateDTO TASK_UPDATE_DTO = new TaskUpdateDTO("Updated Title", "Updated Description");
+
     @InjectMocks
     private TaskService taskService;
 
@@ -46,215 +99,167 @@ public class TaskServiceTest {
 
     @Test
     void testGetTaskById_TaskFound(){
-        Long id = 1L;
-        Task task = new Task();
-        task.setId(id);
+        // Arrange
+        when(taskRepository.findById(TASK_ID_1)).thenReturn(Optional.of(TASK_1));
 
-        when(taskRepository.findById(id)).thenReturn(Optional.of(task));
+        // Act
+        Optional<Task> result = taskService.getTaskById(TASK_ID_1);
 
-        Optional<Task> result = taskService.getTaskById(id);
-
+        // Assert
         assertTrue(result.isPresent());
-        assertEquals(id, result.get().getId());
-        verify(taskRepository).findById(id);
+        assertEquals(TASK_ID_1, result.get().getId());
+        verify(taskRepository).findById(TASK_ID_1);
     }
 
     @Test
     void testGetTaskById_TaskNotFound_Exception(){
-        Long id = 1L;
-        when(taskRepository.findById(id)).thenReturn(Optional.empty());
+        // Arrange
+        when(taskRepository.findById(TASK_ID_1)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> taskService.getTaskById(id));
-        verify(taskRepository).findById(id);
+        // Assert
+        assertThrows(NotFoundException.class, () -> taskService.getTaskById(TASK_ID_1));
+        verify(taskRepository).findById(TASK_ID_1);
     }
 
     @Test
     void testDeleteTaskById_TaskExists_DeletedSuccessfully() {
-        Long taskId = 1L;
-        Task task = new Task();
-        task.setId(taskId);
+        // Arrange
+        when(taskRepository.findById(TASK_ID_1)).thenReturn(Optional.of(TASK_1));
 
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+        // Act
+        taskService.deleteTaskById(TASK_ID_1);
 
-        taskService.deleteTaskById(taskId);
-
-        verify(taskRepository).findById(taskId);
-        verify(taskRepository).deleteById(taskId);
+        // Assert
+        verify(taskRepository).findById(TASK_ID_1);
+        verify(taskRepository).deleteById(TASK_ID_1);
     }
 
     @Test
     void testDeleteTaskById_TaskNotFound_ThrowsException() {
-        Long taskId = 1L;
-        when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
+        // Arrange
+        when(taskRepository.findById(TASK_ID_1)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> taskService.deleteTaskById(taskId));
-        verify(taskRepository).findById(taskId);
+        // Assert
+        assertThrows(NotFoundException.class, () -> taskService.deleteTaskById(TASK_ID_1));
+        verify(taskRepository).findById(TASK_ID_1);
     }
 
     @Test
     void testGetAllTasksByClientInn(){
-        Long inn = 46546L;
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.of(CLIENT_555));
+        when(taskRepository.findByClientInn(CLIENT_INN_555)).thenReturn(List.of(TASK_1));
+        when(taskMapper.toTaskResponseDTO(TASK_1)).thenReturn(TASK_RESPONSE_DTO_1);
 
-        Client client = new Client();
-        client.setInn(inn);
+        // Act
+        List<TaskResponseDTO> result = taskService.getAllTasksByClientInn(CLIENT_INN_555);
 
-        Task task1 = new Task();
-        task1.setId(1L);
-        task1.setTitle("Test");
-        task1.setDescription("test");
-        task1.setClient(client);
-
-        List<Task> tasks = List.of(task1);
-
-        TaskResponseDTO taskResponseDTO = new TaskResponseDTO(1L, "Test", "test", inn, TaskStatus.NEW, LocalDateTime.now());
-
-        when(clientRepository.findByInn(inn)).thenReturn(Optional.of(client));
-        when(taskRepository.findByClientInn(inn)).thenReturn(tasks);
-        when(taskMapper.toTaskResponseDTO(task1)).thenReturn(taskResponseDTO);
-
-        List<TaskResponseDTO> result = taskService.getAllTasksByClientInn(inn);
-
+        // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(taskResponseDTO, result.get(0));
-        verify(taskRepository).findByClientInn(inn);
+        assertEquals(TASK_RESPONSE_DTO_1, result.get(0));
+        verify(taskRepository).findByClientInn(CLIENT_INN_555);
     }
 
     @Test
     void testGetAllTasks_ReturnsListOfDTOs(){
-        Task task1 = new Task();
-        task1.setId(1L);
-        task1.setTitle("Task 1");
+        // Arrange
+        when(taskRepository.findAll()).thenReturn(List.of(TASK_1, TASK_2));
+        when(taskMapper.toTaskResponseDTO(TASK_1)).thenReturn(TASK_RESPONSE_DTO_1);
+        when(taskMapper.toTaskResponseDTO(TASK_2)).thenReturn(TASK_RESPONSE_DTO_2);
 
-        Task task2 = new Task();
-        task2.setId(2L);
-        task2.setTitle("Task 2");
-
-        List<Task> tasks = List.of(task1, task2);
-
-        TaskResponseDTO dto1 = new TaskResponseDTO(1L, "Task 1", "Desc", 1234567890L, TaskStatus.NEW, LocalDateTime.now());
-        TaskResponseDTO dto2 = new TaskResponseDTO(2L, "Task 2", "Desc", 1234567890L, TaskStatus.NEW, LocalDateTime.now());
-
-        when(taskRepository.findAll()).thenReturn(tasks);
-        when(taskMapper.toTaskResponseDTO(task1)).thenReturn(dto1);
-        when(taskMapper.toTaskResponseDTO(task2)).thenReturn(dto2);
-
+        // Act
         List<TaskResponseDTO> result = taskService.getAllTasks();
 
+        // Assert
         assertEquals(2, result.size());
-        assertEquals(dto1, result.get(0));
-        assertEquals(dto2, result.get(1));
+        assertEquals(TASK_RESPONSE_DTO_1, result.get(0));
+        assertEquals(TASK_RESPONSE_DTO_2, result.get(1));
         verify(taskRepository).findAll();
     }
 
     @Test
     void testSaveTask_ClientExists_TaskSaved(){
-        Long clientInn = 100L;
-        Client client = new Client();
-        client.setInn(clientInn);
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.of(CLIENT_555));
+        when(taskMapper.toTask(TASK_CREATE_DTO, CLIENT_555)).thenReturn(TASK_1);
 
-        TaskCreateDTO taskCreateDTO = new TaskCreateDTO("Test", "test");
+        // Act
+        Long savedId = taskService.saveTask(TASK_CREATE_DTO, CLIENT_INN_555);
 
-        Task taskToSave = new Task();
-        taskToSave.setId(1L);
-        taskToSave.setTitle("Test");
-        taskToSave.setDescription("test");
-        taskToSave.setClient(client);
-        taskToSave.setTaskStatus(TaskStatus.NEW);
-        taskToSave.setCreatedAt(LocalDateTime.now());
-
-        when(clientRepository.findByInn(clientInn)).thenReturn(Optional.of(client));
-        when(taskMapper.toTask(taskCreateDTO, client)).thenReturn(taskToSave);
-
-        Long savedId = taskService.saveTask(taskCreateDTO, clientInn);
-
+        // Assert
         assertNotNull(savedId);
         assertEquals(1L, savedId);
-        verify(taskRepository).save(taskToSave);
-        verify(taskMapper).toTask(taskCreateDTO, client);
-        verify(clientRepository).findByInn(clientInn);
+        verify(taskRepository).save(TASK_1);
+        verify(taskMapper).toTask(TASK_CREATE_DTO, CLIENT_555);
+        verify(clientRepository).findByInn(CLIENT_INN_555);
     }
 
     @Test
     void testSaveTask_ClientNotFound_ThrowsException(){
-        Long clientInn = 1L;
-        TaskCreateDTO taskCreateDTO = new TaskCreateDTO("Test", "test");
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.empty());
 
-        when(clientRepository.findByInn(clientInn)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> taskService.saveTask(taskCreateDTO, clientInn));
-        verify(clientRepository).findByInn(clientInn);
-
+        // Assert
+        assertThrows(NotFoundException.class, () -> taskService.saveTask(TASK_CREATE_DTO, CLIENT_INN_555));
+        verify(clientRepository).findByInn(CLIENT_INN_555);
     }
 
     @Test
     void testGetAllTasksByClientInn_ClientExists(){
-        Long inn = 555L;
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.of(CLIENT_555));
+        when(taskRepository.findByClientInn(CLIENT_INN_555)).thenReturn(List.of(TASK_1, TASK_2));
+        when(taskMapper.toTaskResponseDTO(TASK_1)).thenReturn(TASK_RESPONSE_DTO_1);
+        when(taskMapper.toTaskResponseDTO(TASK_2)).thenReturn(TASK_RESPONSE_DTO_2);
 
-        Client client = new Client(555L, "Test",
-                "88005553535", "test@test.ru", "Test street", ClientType.LEGAL_ENTITY, List.of());
+        // Act
+        List<TaskResponseDTO> result = taskService.getAllTasksByClientInn(CLIENT_INN_555);
 
-        Task task1 = new Task(1L, "Task 1", "Desc", client, TaskStatus.NEW, LocalDateTime.now());
-        Task task2 = new Task(2L, "Task 2", "Desc", client, TaskStatus.NEW, LocalDateTime.now());
-
-        TaskResponseDTO dto1 = new TaskResponseDTO(1L, "Task 1", "Desc", 555L, TaskStatus.NEW, LocalDateTime.now());
-        TaskResponseDTO dto2 = new TaskResponseDTO(2L, "Task 2", "Desc", 555L, TaskStatus.NEW, LocalDateTime.now());
-
-        List<TaskResponseDTO> responseDTOS = List.of(dto1, dto2);
-
-        when(clientRepository.findByInn(inn)).thenReturn(Optional.of(client));
-        when(taskRepository.findByClientInn(inn)).thenReturn(List.of(task1, task2));
-        when(taskMapper.toTaskResponseDTO(task1)).thenReturn(dto1);
-        when(taskMapper.toTaskResponseDTO(task2)).thenReturn(dto2);
-
-        List<TaskResponseDTO> result = taskService.getAllTasksByClientInn(inn);
-
+        // Assert
         assertNotNull(result);
-        assertEquals(result, responseDTOS);
-        verify(clientRepository).findByInn(inn);
-        verify(taskRepository).findByClientInn(inn);
-        verify(taskMapper).toTaskResponseDTO(task1);
-        verify(taskMapper).toTaskResponseDTO(task2);
+        assertEquals(result, List.of(TASK_RESPONSE_DTO_1, TASK_RESPONSE_DTO_2));
+        verify(clientRepository).findByInn(CLIENT_INN_555);
+        verify(taskRepository).findByClientInn(CLIENT_INN_555);
+        verify(taskMapper).toTaskResponseDTO(TASK_1);
+        verify(taskMapper).toTaskResponseDTO(TASK_2);
     }
 
     @Test
     void testGetAllTasksByClientInn_ClientNotFound_Exception(){
-        Long inn = 555L;
-        when(clientRepository.findByInn(inn)).thenReturn(Optional.empty());
+        // Arrange
+        when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> taskService.getAllTasksByClientInn(inn));
-        verify(clientRepository).findByInn(inn);
+        // Assert
+        assertThrows(NotFoundException.class, () -> taskService.getAllTasksByClientInn(CLIENT_INN_555));
+        verify(clientRepository).findByInn(CLIENT_INN_555);
     }
 
     @Test
     void testUpdateTask_TaskExists(){
-        Long taskId = 1L;
-        Client client = new Client();
-        Task task1 = new Task(1L, "Task 1", "Desc", client, TaskStatus.NEW, LocalDateTime.now());
-        TaskUpdateDTO taskUpdateDTO = new TaskUpdateDTO("Task 1", "Desc");
-        TaskResponseDTO taskResponseDTO = new TaskResponseDTO(1L, "Task 1", "Desc", 555L, TaskStatus.NEW, LocalDateTime.now());
+        // Arrange
+        when(taskRepository.findById(TASK_ID_1)).thenReturn(Optional.of(TASK_1));
+        when(taskMapper.toTaskFromTaskUpdateDTO(TASK_UPDATE_DTO, TASK_1)).thenReturn(TASK_1);
+        when(taskMapper.toTaskResponseDTO(TASK_1)).thenReturn(TASK_RESPONSE_DTO_1);
 
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task1));
-        when(taskMapper.toTaskFromTaskUpdateDTO(taskUpdateDTO, task1)).thenReturn(task1);
-        when(taskMapper.toTaskResponseDTO(task1)).thenReturn(taskResponseDTO);
+        // Act
+        TaskResponseDTO result = taskService.updateTask(TASK_ID_1, TASK_UPDATE_DTO);
 
-        TaskResponseDTO result = taskService.updateTask(taskId, taskUpdateDTO);
-
+        // Assert
         assertNotNull(result);
-        assertEquals(result, taskResponseDTO);
-        verify(taskRepository).findById(taskId);
-        verify(taskMapper).toTaskFromTaskUpdateDTO(taskUpdateDTO, task1);
-        verify(taskMapper).toTaskResponseDTO(task1);
+        assertEquals(result, TASK_RESPONSE_DTO_1);
+        verify(taskRepository).findById(TASK_ID_1);
+        verify(taskMapper).toTaskFromTaskUpdateDTO(TASK_UPDATE_DTO, TASK_1);
+        verify(taskMapper).toTaskResponseDTO(TASK_1);
     }
 
     @Test
     void testUpdateTask_TaskNotFound_Exception(){
-        Long taskId = 1L;
-        TaskUpdateDTO taskUpdateDTO = new TaskUpdateDTO("Task 1", "Desc");
+        // Arrange
+        when(taskRepository.findById(TASK_ID_1)).thenReturn(Optional.empty());
 
-        when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, ()-> taskService.updateTask(taskId, taskUpdateDTO));
-        verify(taskRepository).findById(taskId);
+        // Assert
+        assertThrows(NotFoundException.class, ()-> taskService.updateTask(TASK_ID_1, TASK_UPDATE_DTO));
+        verify(taskRepository).findById(TASK_ID_1);
     }
 }
