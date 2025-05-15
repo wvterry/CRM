@@ -1,11 +1,11 @@
 package com.example.demo.Service;
 
 import com.example.demo.DTO.*;
-import com.example.demo.Exception.ClientNotFoundException;
+import com.example.demo.Exception.NotFoundException;
 import com.example.demo.Mapper.ClientMapper;
+import com.example.demo.Mapper.ClientMapperImp;
 import com.example.demo.Model.Client;
 import com.example.demo.Repository.ClientRepository;
-import com.example.demo.Repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +35,7 @@ public class ClientService {
     public ClientResponseDTO getClientByInn(Long inn){
         Client client = clientRepository
                 .findByInn(inn)
-                .orElseThrow(() -> new ClientNotFoundException("Клиент с ИНН " + inn + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
         return clientMapper.toClientResponseDTOFromClient(client);
     }
 
@@ -49,14 +49,14 @@ public class ClientService {
     public void deleteClientByInn(Long inn){
         Optional<Client> clientForDelete = clientRepository.findByInn(inn);
         if (clientForDelete.isEmpty()){
-            throw new ClientNotFoundException("Клиент с ИНН " + inn + " не найден");
+            throw new NotFoundException("Клиент с ИНН " + inn + " не найден");
         }
         clientRepository.deleteByInn(inn);
     }
 
     @Transactional(readOnly = true)
     public ClientWithTasksDTO getClientsAndHisTasks(Long inn){
-        Client client = clientRepository.findByInn(inn).orElseThrow(() -> new ClientNotFoundException("Клиент с ИНН " + inn + " не найден"));
+        Client client = clientRepository.findByInn(inn).orElseThrow(() -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
       return clientMapper.toClientAndHisTasksDTO(client);
     }
 
@@ -64,7 +64,7 @@ public class ClientService {
     public ClientResponseDTO updateClient(Long inn, ClientForUpdateDTO clientForUpdateDTO){
         Client clientForUpdate = clientRepository
                 .findByInn(inn)
-                .orElseThrow(() -> new ClientNotFoundException("Клиент с ИНН " + inn + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
         clientRepository.save(clientMapper.toClientFromClientForUpdateDTO(clientForUpdate, clientForUpdateDTO));
         return clientMapper.toClientResponseDTOFromClient(clientForUpdate);
     }

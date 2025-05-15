@@ -1,8 +1,6 @@
 package com.example.demo.Controller;
 
 import com.example.demo.DTO.*;
-import com.example.demo.Mapper.ClientMapper;
-import com.example.demo.Model.Client;
 import com.example.demo.Service.ClientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
