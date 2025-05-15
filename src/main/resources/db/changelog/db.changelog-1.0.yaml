@@ -1,0 +1,71 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-client-table
+      author: EgorZhukov
+      changes:
+        - createTable:
+            tableName: client
+            columns:
+              - column:
+                  name: inn
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: phone
+                  type: VARCHAR(50)
+              - column:
+                  name: email
+                  type: VARCHAR(100)
+              - column:
+                  name: address
+                  type: TEXT
+              - column:
+                  name: client_type
+                  type: VARCHAR(50)
+  - changeSet:
+      id: create-task-table
+      author: EgorZhukov
+      changes:
+        - createTable:
+            tableName: task
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: client_inn
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: task_status
+                  type: VARCHAR(50)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            constraintName: fk_task_client
+            baseTableName: task
+            baseColumnNames: client_inn
+            referencedTableName: client
+            referencedColumnNames: inn
