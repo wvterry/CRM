@@ -37,6 +37,14 @@ public class Task {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @ManyToOne
+    @JoinColumn(name = "assignee_id", referencedColumnName = "userId", nullable = false)
+    private User assignee;
+
+    @ManyToOne
+    @JoinColumn(name = "author_id", referencedColumnName = "userId", nullable = false)
+    private User author;
+
     public Task(String title, String description, Client client){
         this.title = title;
         this.description = description;

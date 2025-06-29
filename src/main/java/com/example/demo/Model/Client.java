@@ -39,9 +39,16 @@ public class Client {
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Task> tasks = new ArrayList<>();
 
-    public Client(Long inn, String name, ClientType clientType) {
-        this.inn = inn;
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
+    private User manager;
+
+    public Client(String name, String phone, String email, String address, ClientType clientType, User manager) {
         this.name = name;
+        this.phone = phone;
+        this.email = email;
+        this.address = address;
         this.clientType = clientType;
+        this.manager = manager;
     }
 }
