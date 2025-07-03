@@ -14,6 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter{
@@ -28,29 +29,35 @@ public class AuthTokenFilter extends OncePerRequestFilter{
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        String jwt = parseJwt(request).get();
+
+        if (jwt == null || !jwtUtil.validateToken(jwt)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         try {
-            String jwt = parseJwt(request);
-            if (jwt != null && jwtUtil.validateToken(jwt)){
-                String email = jwtUtil.getEmailFromToken(jwt);
-                List<GrantedAuthority> authorities = jwtUtil.getAuthorityFromToken(jwt);
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(email, null, authorities);
+            String email = jwtUtil.getEmailFromToken(jwt);
+            List<GrantedAuthority> authorities = jwtUtil.getAuthorityFromToken(jwt);
 
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            }
-        } catch (Exception e){
-            System.out.println("Cannot set user authentication: " + e);
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    email, null, authorities
+            );
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } catch (Exception e) {
+            logger.warn("Failed to set authentication for token", e);
         }
+
         filterChain.doFilter(request, response);
     }
 
-    private String parseJwt(HttpServletRequest request){
+    private Optional<String> parseJwt(HttpServletRequest request){
         String headerAuth = request.getHeader("Authorization");
         if (headerAuth != null && headerAuth.startsWith("Bearer ")){
-            return headerAuth.substring(7);
+            return Optional.of(headerAuth.substring(7));
         }
-        return null;
+        return Optional.empty();
     }
 }

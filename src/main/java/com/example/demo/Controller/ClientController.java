@@ -22,19 +22,16 @@ public class ClientController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MANAGER')")
     public ResponseEntity<List<ClientInfoResponseDTO>> getAllClients(){
         return ResponseEntity.ok(clientService.getAllClients());
     }
 
     @GetMapping("/{inn}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MANAGER')")
     public ResponseEntity<ClientResponseDTO> getClientByInn(@PathVariable Long inn){
         return ResponseEntity.ok(clientService.getClientByInn(inn));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MANAGER')")
     public ResponseEntity<Long> createClient(@RequestBody CreateClientDTO createClientDTO){
         return ResponseEntity.status(HttpStatus.CREATED).body(clientService.saveClient(createClientDTO));
     }
@@ -47,13 +44,11 @@ public class ClientController {
     }
 
     @GetMapping("/cat/{inn}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MANAGER')")
     public ResponseEntity<ClientWithTasksDTO> getClientsWithHisTasks(@PathVariable Long inn) {
         return ResponseEntity.ok(clientService.getClientsAndHisTasks(inn));
     }
 
     @PutMapping("/{inn}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MANAGER')")
     public ResponseEntity<ClientResponseDTO> updateClient(@PathVariable Long inn,
                                                           @RequestBody ClientForUpdateDTO clientForUpdateDTO)
     {

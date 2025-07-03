@@ -52,4 +52,15 @@ public class Task {
         this.taskStatus = TaskStatus.NEW;
         this.createdAt = LocalDateTime.now();
     }
+
+    public Task(Long id, TaskStatus taskStatus, User author) {
+        this.id = id;
+        this.taskStatus = taskStatus;
+        this.author = author;
+    }
+
+    public Task(Long id, User assignee) {
+        this.id = id;
+        this.assignee = assignee;
+    }
 }

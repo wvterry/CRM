@@ -5,7 +5,6 @@ import com.example.demo.Enum.TaskStatus;
 import com.example.demo.Exception.NotFoundException;
 import com.example.demo.JWT.JwtUtil;
 import com.example.demo.Mapper.TaskMapper;
-import com.example.demo.Mapper.TaskMapperImp;
 import com.example.demo.Model.Client;
 import com.example.demo.Model.Role;
 import com.example.demo.Model.Task;
@@ -13,7 +12,6 @@ import com.example.demo.Model.User;
 import com.example.demo.Repository.ClientRepository;
 import com.example.demo.Repository.TaskRepository;
 import com.example.demo.Repository.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,15 +61,6 @@ public class TaskService {
         return taskToSave.getId();
     }
 
-//    @Transactional
-//    public void deleteTaskById(Long id){
-//        Optional<Task> taskForDelete = taskRepository.findById(id);
-//        if (taskForDelete.isEmpty()){
-//            throw new NotFoundException("Задача с ID " + id + " не найдена");
-//        }
-//        taskRepository.deleteById(id);
-//    }
-
     @Transactional(readOnly = true)
     public List<TaskResponseDTO> getAllTasks(){
         return taskRepository.findAll()
@@ -95,15 +84,13 @@ public class TaskService {
         if (taskForUpdate.isEmpty()){
             throw new NotFoundException("Задача с ID " + id + " не найдена");
         }
-        Task updatedTask = taskMapper.toTaskFromTaskUpdateDTO(taskUpdateDTO, taskForUpdate.get());
+        Task updatedTask = taskMapper.toTask(taskUpdateDTO, taskForUpdate.get());
         taskRepository.save(updatedTask);
         return taskMapper.toTaskResponseDTO(updatedTask);
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponseDTO> getMyTasks(HttpServletRequest httpServletRequest){
-        String token = jwtUtil.getTokenFromRequest(httpServletRequest);
-        String email = jwtUtil.getEmailFromToken(token);
+    public List<TaskResponseDTO> getMyTasks(String email){
         Optional<User> user = userRepository.findUserByEmail(email);
         if (user.isEmpty()){
             throw new NotFoundException("Пользователь с email " + email + " не найден");
@@ -118,15 +105,13 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponseDTO> getOnlyMyTasks(HttpServletRequest httpServletRequest){
-        String token = jwtUtil.getTokenFromRequest(httpServletRequest);
-        String email = jwtUtil.getEmailFromToken(token);
+    public List<TaskResponseDTO> getTasksCreatedByMe(String email){
         Optional<User> user = userRepository.findUserByEmail(email);
         if (user.isEmpty()){
             throw new NotFoundException("Пользователь с email " + email + " не найден");
         }
         List<TaskResponseDTO> myTasks = taskRepository
-                .findAllMyCreatedTasksByUserId(user.get().getUserId())
+                .findByAuthorUserId(user.get().getUserId())
                 .stream()
                 .map(taskMapper::toTaskResponseDTO)
                 .collect(Collectors.toList());
@@ -135,19 +120,18 @@ public class TaskService {
     }
 
     @Transactional
-    public TaskResponseDTO changeStatus(HttpServletRequest httpServletRequest,
+    public TaskResponseDTO changeStatus(String email,
                                         Long taskId,
                                         TaskStatusDTO taskStatusDTO) throws AccessDeniedException {
         // тут я найду юзера
-        String token = jwtUtil.getTokenFromRequest(httpServletRequest);
-        String email = jwtUtil.getEmailFromToken(token);
         Optional<User> user = userRepository.findUserByEmail(email);
         if (user.isEmpty()){
             throw new NotFoundException("Пользователь с email " + email + " не найден");
         }
 
         //тут я найду таску
-        Task task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Задача не найдена"));
+        Task task = taskRepository.findById(taskId).orElseThrow(() ->
+                new NotFoundException("Задача не найдена"));
 
         //тут я узнаю новый статус
         TaskStatus taskStatus = taskStatusDTO.getNewTaskStatus();
@@ -171,15 +155,14 @@ public class TaskService {
                 task.setTaskStatus(taskStatus);
             }
         }
+        taskRepository.save(task);
         return taskMapper.toTaskResponseDTO(task);
     }
 
     @Transactional
-    public TaskResponseDTO changeAssignee (HttpServletRequest httpServletRequest,
+    public TaskResponseDTO changeAssignee (String email,
                                            Long id,
                                            TaskAssigneeDTO taskAssigneeDTO) throws AccessDeniedException {
-        String token = jwtUtil.getTokenFromRequest(httpServletRequest);
-        String email = jwtUtil.getEmailFromToken(token);
         User user = userRepository.findUserByEmail(email)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
@@ -198,6 +181,7 @@ public class TaskService {
             throw new AccessDeniedException("У вас нет прав для изменения ответственного сотрудника");
         }
         task.setAssignee(newAssignee);
+        taskRepository.save(task);
         return taskMapper.toTaskResponseDTO(task);
     }
 

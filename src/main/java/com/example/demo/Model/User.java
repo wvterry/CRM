@@ -43,13 +43,32 @@ public class User {
     @OneToMany(mappedBy = "assignee", cascade = CascadeType.DETACH, orphanRemoval = false)
     private List<Task> assignedTasks = new ArrayList<>();
 
-    @OneToMany(mappedBy = "author", cascade = CascadeType.DETACH, orphanRemoval = false) //проверить cascade = CascadeType.DETACH, orphanRemoval = false
+    @OneToMany(mappedBy = "author", cascade = CascadeType.DETACH, orphanRemoval = false)
     private List<Task> createdTask;
+
     public User(String firstName, String lastName, String email, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
+    }
+    public User(Long userId, String firstName, String lastName, String email, String password) {
+        this.userId = userId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.password = password;
+    }
+
+    public User(Long userId, String email, Set<Role> roles) {
+        this.userId = userId;
+        this.email = email;
+        this.roles = roles;
+    }
+
+    public User(Long userId, Set<Role> roles) {
+        this.userId = userId;
+        this.roles = roles;
     }
 }
 

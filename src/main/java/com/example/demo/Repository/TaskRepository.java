@@ -14,6 +14,5 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT t FROM Task t WHERE t.author.userId = :userId OR t.assignee.userId = :userId")
     List<Task> findAllByUserId(@Param("userId") Long userid);
 
-    @Query("SELECT t FROM Task t where t.author.userId = :userId")
-    List<Task> findAllMyCreatedTasksByUserId(@Param("userId") Long userId);
+    List<Task> findByAuthorUserId(Long userId);
 }

@@ -1,8 +1,0 @@
-databaseChangeLog:
-  - changeSet:
-      id: insert-default-roles
-      author: EgorZhukov
-      changes:
-        - dropColumn:
-            tableName: roles
-            columnName: email
