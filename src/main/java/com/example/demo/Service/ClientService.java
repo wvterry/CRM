@@ -3,7 +3,6 @@ package com.example.demo.Service;
 import com.example.demo.DTO.*;
 import com.example.demo.Exception.NotFoundException;
 import com.example.demo.Mapper.ClientMapper;
-import com.example.demo.Mapper.ClientMapperImp;
 import com.example.demo.Model.Client;
 import com.example.demo.Repository.ClientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +35,7 @@ public class ClientService {
         Client client = clientRepository
                 .findByInn(inn)
                 .orElseThrow(() -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
-        return clientMapper.toClientResponseDTOFromClient(client);
+        return clientMapper.toClientResponseDTO(client);
     }
 
     @Transactional
@@ -65,7 +64,7 @@ public class ClientService {
         Client clientForUpdate = clientRepository
                 .findByInn(inn)
                 .orElseThrow(() -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
-        clientRepository.save(clientMapper.toClientFromClientForUpdateDTO(clientForUpdate, clientForUpdateDTO));
-        return clientMapper.toClientResponseDTOFromClient(clientForUpdate);
+        clientRepository.save(clientMapper.toClient(clientForUpdate, clientForUpdateDTO));
+        return clientMapper.toClientResponseDTO(clientForUpdate);
     }
 }

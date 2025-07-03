@@ -5,12 +5,12 @@ import static org.mockito.Mockito.*;
 
 import com.example.demo.DTO.*;
 import com.example.demo.Enum.ClientType;
-import com.example.demo.Enum.TaskStatus;
 import com.example.demo.Exception.NotFoundException;
 import com.example.demo.Mapper.ClientMapper;
 import com.example.demo.Model.Client;
 
 import com.example.demo.Model.Task;
+import com.example.demo.Model.User;
 import com.example.demo.Repository.ClientRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +27,20 @@ public class ClientServiceTest {
     private static final Long CLIENT_INN_555 = 555L;
     private static final Long CLIENT_INN_666 = 666L;
 
+    private static final User user1 = new User(
+            "Egor",
+            "Zhukov",
+            "ez@test.ru",
+            "ez"
+    );
+
+    private static final User user2 = new User(
+            "Ivan",
+            "Ivanov",
+            "ii@test.ru",
+            "ii"
+    );
+
     private static final Client CLIENT_555 = new Client(
             CLIENT_INN_555,
             "Test1",
@@ -35,7 +48,9 @@ public class ClientServiceTest {
             "test@test.ru",
             "Test street",
             ClientType.LEGAL_ENTITY,
-            List.of());
+            List.of(),
+            user1
+    );
 
     private static final Client CLIENT_666 = new Client(
             CLIENT_INN_666,
@@ -44,7 +59,8 @@ public class ClientServiceTest {
             "test1@test.ru",
             "Test1 street",
             ClientType.LEGAL_ENTITY,
-            List.of()
+            List.of(),
+            user2
     );
 
     private static final ClientResponseDTO CLIENT_RESPONSE_DTO_555 = new ClientResponseDTO(
@@ -106,7 +122,7 @@ public class ClientServiceTest {
     void testGetClientByInn_ClientExist(){
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.of(CLIENT_555));
-        when(clientMapper.toClientResponseDTOFromClient(CLIENT_555)).thenReturn(CLIENT_RESPONSE_DTO_555);
+        when(clientMapper.toClientResponseDTO(CLIENT_555)).thenReturn(CLIENT_RESPONSE_DTO_555);
 
         // Act
         ClientResponseDTO result = clientService.getClientByInn(CLIENT_INN_555);
@@ -115,7 +131,7 @@ public class ClientServiceTest {
         assertNotNull(result);
         assertEquals(result, CLIENT_RESPONSE_DTO_555);
         verify(clientRepository).findByInn(CLIENT_INN_555);
-        verify(clientMapper).toClientResponseDTOFromClient(CLIENT_555);
+        verify(clientMapper).toClientResponseDTO(CLIENT_555);
     }
 
     @Test
@@ -207,8 +223,8 @@ public class ClientServiceTest {
     void testUpdateClient_ClientExist(){
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_555)).thenReturn(Optional.of(CLIENT_555));
-        when(clientMapper.toClientFromClientForUpdateDTO(CLIENT_555, CLIENT_FOR_UPDATE_DTO)).thenReturn(CLIENT_555);
-        when(clientMapper.toClientResponseDTOFromClient(CLIENT_555)).thenReturn(CLIENT_RESPONSE_DTO_555);
+        when(clientMapper.toClient(CLIENT_555, CLIENT_FOR_UPDATE_DTO)).thenReturn(CLIENT_555);
+        when(clientMapper.toClientResponseDTO(CLIENT_555)).thenReturn(CLIENT_RESPONSE_DTO_555);
 
         // Act
         ClientResponseDTO result = clientService.updateClient(CLIENT_INN_555, CLIENT_FOR_UPDATE_DTO);
@@ -217,8 +233,8 @@ public class ClientServiceTest {
         assertNotNull(result);
         assertEquals(result, CLIENT_RESPONSE_DTO_555);
         verify(clientRepository).findByInn(CLIENT_INN_555);
-        verify(clientMapper).toClientFromClientForUpdateDTO(CLIENT_555, CLIENT_FOR_UPDATE_DTO);
-        verify(clientMapper).toClientResponseDTOFromClient(CLIENT_555);
+        verify(clientMapper).toClient(CLIENT_555, CLIENT_FOR_UPDATE_DTO);
+        verify(clientMapper).toClientResponseDTO(CLIENT_555);
         verify(clientRepository).save(CLIENT_555);
     }
 

@@ -12,5 +12,5 @@ public interface TaskMapper {
 
     public Task toTask(TaskCreateDTO taskCreateDTO, Client client);
 
-    public Task toTaskFromTaskUpdateDTO(TaskUpdateDTO taskUpdateDTO, Task task);
+    public Task toTask(TaskUpdateDTO taskUpdateDTO, Task task);
 }

@@ -13,15 +13,16 @@ import java.time.LocalDateTime;
 @Component
 public class TaskMapperImp implements TaskMapper {
 
-    public TaskResponseDTO toTaskResponseDTO(Task task){
-        return new TaskResponseDTO(
-                task.getId(),
-                task.getTitle(),
-                task.getDescription(),
-                task.getClient().getInn(),
-                task.getTaskStatus(),
-                task.getCreatedAt()
-        );
+        public TaskResponseDTO toTaskResponseDTO(Task task){
+            TaskResponseDTO taskResponseDTO = new TaskResponseDTO();
+            taskResponseDTO.setId(task.getId());
+            taskResponseDTO.setTitle(task.getTitle());
+            taskResponseDTO.setDescription(task.getDescription());
+            taskResponseDTO.setClientInn(task.getClient().getInn());
+            taskResponseDTO.setTaskStatus(task.getTaskStatus());
+            taskResponseDTO.setCreatedAt(task.getCreatedAt());
+            taskResponseDTO.setAssignee(task.getAssignee().getFirstName() + " " + task.getAssignee().getLastName());
+            return taskResponseDTO;
     }
 
     public Task toTask(TaskCreateDTO taskCreateDTO, Client client){
@@ -34,7 +35,7 @@ public class TaskMapperImp implements TaskMapper {
         return task;
     }
 
-    public Task toTaskFromTaskUpdateDTO(TaskUpdateDTO taskUpdateDTO, Task task){
+    public Task toTask(TaskUpdateDTO taskUpdateDTO, Task task){
         Task toTaskFromTaskUpdate = new Task();
         toTaskFromTaskUpdate.setId(task.getId());
         toTaskFromTaskUpdate.setTaskStatus(task.getTaskStatus());

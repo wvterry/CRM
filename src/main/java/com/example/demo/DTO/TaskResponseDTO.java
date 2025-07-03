@@ -24,4 +24,6 @@ public class TaskResponseDTO {
 
     private LocalDateTime createdAt;
 
+    private String assignee;
+
 }

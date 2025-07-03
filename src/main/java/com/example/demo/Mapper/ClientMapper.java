@@ -11,7 +11,7 @@ public interface ClientMapper {
 
     public ClientWithTasksDTO toClientAndHisTasksDTO(Client client);
 
-    public Client toClientFromClientForUpdateDTO(Client clientForUpdate, ClientForUpdateDTO clientForUpdateDTO);
+    public Client toClient(Client clientForUpdate, ClientForUpdateDTO clientForUpdateDTO);
 
-    public ClientResponseDTO toClientResponseDTOFromClient(Client client);
+    public ClientResponseDTO toClientResponseDTO(Client client);
 }

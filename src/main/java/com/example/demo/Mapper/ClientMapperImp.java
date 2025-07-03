@@ -46,7 +46,7 @@ public class ClientMapperImp implements ClientMapper {
         return clientWithTasksDTO;
     }
 
-    public Client toClientFromClientForUpdateDTO(Client clientForUpdate, ClientForUpdateDTO clientForUpdateDTO){
+    public Client toClient(Client clientForUpdate, ClientForUpdateDTO clientForUpdateDTO){
         Client client = new Client();
         client.setInn(clientForUpdate.getInn());
         client.setPhone(clientForUpdateDTO.getPhone());
@@ -58,7 +58,7 @@ public class ClientMapperImp implements ClientMapper {
         return client;
     }
 
-    public ClientResponseDTO toClientResponseDTOFromClient(Client client){
+    public ClientResponseDTO toClientResponseDTO(Client client){
         ClientResponseDTO clientResponseDTO = new ClientResponseDTO();
         clientResponseDTO.setName(client.getName());
         clientResponseDTO.setAddress(client.getAddress());
