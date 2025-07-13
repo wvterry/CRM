@@ -1,0 +1,36 @@
+name: Build and Deploy Spring Boot App
+
+on:
+  pull_request: #ну или на пуш переделать. Обсудить с Васей
+    branches:
+      - main
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn clean package
+
+      - name: Run tests
+        run: mvn test
+
+      - name: Check test coverage (optional)
+        run: echo "Check your Surefire reports or integrate JaCoCo"
+
+      - name: Upload artifact for deployment
+        uses: actions/upload-artifact@v3
+        with:
+          name: spring-boot-app
+          path: target/*.jar
