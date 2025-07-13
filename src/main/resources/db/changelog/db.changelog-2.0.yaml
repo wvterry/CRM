@@ -1,0 +1,168 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-user-table
+      author: EgorZhukov
+      changes:
+        - createTable:
+            tableName: user_detail
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(100)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: create-role-table
+      author: EgorZhukov
+      changes:
+        - createTable:
+            tableName: roles
+            columns:
+              - column:
+                  name: role_id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: add-firstname-lastname-to-user
+      author: EgorZhukov
+      changes:
+        - addColumn:
+            tableName: user_detail
+            columns:
+              - column:
+                  name: first_name
+                  type: VARCHAR(100)
+                  value: "Егор"
+              - column:
+                  name: last_name
+                  type: VARCHAR(100)
+                  value: "Жуков"
+
+  - changeSet:
+      id: create-user-roles-table
+      author: EgorZhukov
+      changes:
+        - createTable:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            constraintName: pk_user_role
+            tableName: user_roles
+            columnNames: user_id, role_id
+        - addForeignKeyConstraint:
+            baseTableName: user_roles
+            baseColumnNames: user_id
+            constraintName: fk_user_roles_to_user
+            referencedTableName: user_detail
+            referencedColumnNames: user_id
+        - addForeignKeyConstraint:
+            baseTableName: user_roles
+            baseColumnNames: role_id
+            constraintName: fk_user_roles_to_role
+            referencedTableName: roles
+            referencedColumnNames: role_id
+
+  - changeSet:
+      id: insert-default-roles
+      author: EgorZhukov
+      changes:
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: role_id
+                  value: 1
+              - column:
+                  name: name
+                  value: USER
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: role_id
+                  value: 2
+              - column:
+                  name: name
+                  value: ADMIN
+
+  - changeSet:
+      id: add-manager-to-client
+      author: EgorZhukov
+      changes:
+        - addColumn:
+            tableName: client
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            constraintName: fk_client_user
+            baseTableName: client
+            baseColumnNames: user_id
+            referencedTableName: user_detail
+            referencedColumnNames: user_id
+
+  - changeSet:
+      id: add-assignee-author-to-task
+      author: EgorZhukov
+      changes:
+        - addColumn:
+            tableName: task
+            columns:
+              - column:
+                  name: assignee_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: author_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            constraintName: fk_task_assignee
+            baseTableName: task
+            baseColumnNames: assignee_id
+            referencedTableName: user_detail
+            referencedColumnNames: user_id
+        - addForeignKeyConstraint:
+            constraintName: fk_task_author
+            baseTableName: task
+            baseColumnNames: author_id
+            referencedTableName: user_detail
+            referencedColumnNames: user_id
