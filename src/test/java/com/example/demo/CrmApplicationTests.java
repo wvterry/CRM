@@ -7,7 +7,6 @@ import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@TestPropertySource(properties = "spring.liquibase.enabled=false")
 class CrmApplicationTests {
 
 	@Test
