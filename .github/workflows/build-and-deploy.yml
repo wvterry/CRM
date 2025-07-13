@@ -30,7 +30,7 @@ jobs:
         run: echo "Check your Surefire reports or integrate JaCoCo"
 
       - name: Upload artifact for deployment
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: spring-boot-app
           path: target/*.jar
