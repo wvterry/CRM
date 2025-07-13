@@ -36,7 +36,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@ActiveProfiles("test")
 public class UserServiceTest {
 
     private static final String email = "test@example.com";
@@ -144,7 +143,6 @@ public class UserServiceTest {
     private UserDetails userDetails;
     @Mock
     private Authentication authentication;
-
     @Mock
     private RoleRepository roleRepository;
 

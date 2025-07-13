@@ -38,7 +38,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@ActiveProfiles("test")
 public class TaskServiceTest {
 
     private static final String email = "test@test.ru";
