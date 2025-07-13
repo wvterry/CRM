@@ -1,6 +1,7 @@
 package com.example.demo.JWT;
 
 import com.example.demo.Service.UserService;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +27,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<Void> registerUser(@RequestBody SignupRequest signupRequest){
+    public ResponseEntity<Void> registerUser(@RequestBody SignupRequest signupRequest) throws BadRequestException {
         userService.register(signupRequest);
         return ResponseEntity.ok().build();
     }

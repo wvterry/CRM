@@ -58,6 +58,6 @@ public class AuthTokenFilter extends OncePerRequestFilter{
         if (headerAuth != null && headerAuth.startsWith("Bearer ")){
             return Optional.of(headerAuth.substring(7));
         }
-        return Optional.empty();
+        return Optional.empty();  // возвращать эксепшн при неудаче (или не возвращать), подумать над вариантами
     }
 }

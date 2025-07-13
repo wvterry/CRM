@@ -2,7 +2,6 @@ package com.example.demo.Service;
 
 import com.example.demo.DTO.*;
 import com.example.demo.Exception.NotFoundException;
-import com.example.demo.Exception.UserAlreadyExistsException;
 import com.example.demo.JWT.AuthRequest;
 import com.example.demo.JWT.JwtUtil;
 import com.example.demo.JWT.SignupRequest;
@@ -11,6 +10,7 @@ import com.example.demo.Model.Role;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.RoleRepository;
 import com.example.demo.Repository.UserRepository;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -63,9 +63,9 @@ public class UserService {
     }
 
     @Transactional
-    public void register(SignupRequest signupRequest){
+    public void register(SignupRequest signupRequest) throws BadRequestException {
         if (userRepository.existsByEmail(signupRequest.getEmail())){
-            throw new UserAlreadyExistsException("Пользователь с email " + signupRequest.getEmail() + " уже зарегистрирован");
+            throw new BadRequestException("Пользователь с email " + signupRequest.getEmail() + " уже зарегистрирован");
         }
         String password = passwordEncoder.encode(signupRequest.getPassword());
         Set<Role> roles = new HashSet<>();

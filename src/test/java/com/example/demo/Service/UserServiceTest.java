@@ -2,7 +2,6 @@ package com.example.demo.Service;
 
 import com.example.demo.DTO.*;
 import com.example.demo.Exception.NotFoundException;
-import com.example.demo.Exception.UserAlreadyExistsException;
 import com.example.demo.JWT.AuthRequest;
 import com.example.demo.JWT.JwtUtil;
 import com.example.demo.JWT.SignupRequest;
@@ -11,6 +10,7 @@ import com.example.demo.Model.Role;
 import com.example.demo.Repository.RoleRepository;
 import com.example.demo.Repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -181,7 +181,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void registerTest(){
+    void registerTest() throws BadRequestException {
         //Arrange
         when(userRepository.existsByEmail(SIGNUP_REQUEST.getEmail())).thenReturn(false);
         when(passwordEncoder.encode(password)).thenReturn(encodedPassword);
@@ -205,7 +205,7 @@ public class UserServiceTest {
         when(userRepository.existsByEmail(SIGNUP_REQUEST.getEmail())).thenReturn(true);
 
         //Assert
-        assertThrows(UserAlreadyExistsException.class, () -> userService.register(SIGNUP_REQUEST));
+        assertThrows(BadRequestException.class, () -> userService.register(SIGNUP_REQUEST));
         verify(userRepository).existsByEmail(SIGNUP_REQUEST.getEmail());
     }
 

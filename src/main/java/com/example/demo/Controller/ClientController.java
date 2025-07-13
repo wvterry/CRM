@@ -37,7 +37,7 @@ public class ClientController {
     }
 
     @DeleteMapping("/{inn}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<Void> deleteClient(@PathVariable Long inn){
         clientService.deleteClientByInn(inn);
         return ResponseEntity.noContent().build();

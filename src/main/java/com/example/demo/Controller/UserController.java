@@ -31,7 +31,6 @@ public class UserController {
     }
 
     @PutMapping("/updatepass")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> updatePassword(HttpServletRequest httpServletRequest,
                                                @RequestBody UpdatePasswordDTO updatePasswordDTO){
         String token = jwtUtil.getTokenFromRequest(httpServletRequest);
@@ -48,7 +47,7 @@ public class UserController {
     }
 
     @GetMapping("/get/users")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<List<UserInfoDTO>> getAllUserInfo(){
         return ResponseEntity.ok(userService.getAllUsersInfo());
     }
