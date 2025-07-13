@@ -1,0 +1,18 @@
+name: Upload artifact for deployment
+
+on:
+  pull_request: # СДЕЛАТЬ при каждом коммите в мастер (который точно попадет в мастер)
+    branches:
+      - main
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Upload artifact for deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: spring-boot-app
+          path: target/*.jar
