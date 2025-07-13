@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
+@ActiveProfiles("test")
 public class TaskServiceTest {
 
     private static final String email = "test@test.ru";
