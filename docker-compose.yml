@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: mypass
       POSTGRES_DB: crm_db
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -17,7 +17,7 @@ services:
     build: .
     container_name: crm-app
     ports:
-      - "8081:8080"
+      - "8080:8080"
     depends_on:
       - postgres
     environment:
