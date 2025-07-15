@@ -14,7 +14,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   crm-app:
-    build: .
+    image: wvterry/crm-app:latest
     container_name: crm-app
     ports:
       - "8081:8080"
