@@ -1,4 +1,4 @@
-name: Build and Deploy Spring Boot App
+name: Build and Test Spring Boot App
 
 on:
   pull_request:

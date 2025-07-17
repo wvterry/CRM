@@ -29,16 +29,16 @@ public class AuthTokenFilter extends OncePerRequestFilter{
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String jwt = parseJwt(request);
+        Optional<String> jwt = parseJwt(request);
 
-        if (jwt == null || !jwtUtil.validateToken(jwt)) {
+        if (jwt.isEmpty() || !jwtUtil.validateToken(jwt.get())) {
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            String email = jwtUtil.getEmailFromToken(jwt);
-            List<GrantedAuthority> authorities = jwtUtil.getAuthorityFromToken(jwt);
+            String email = jwtUtil.getEmailFromToken(jwt.get());
+            List<GrantedAuthority> authorities = jwtUtil.getAuthorityFromToken(jwt.get());
 
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     email, null, authorities
@@ -53,11 +53,13 @@ public class AuthTokenFilter extends OncePerRequestFilter{
         filterChain.doFilter(request, response);
     }
 
-    private String parseJwt(HttpServletRequest request){
+
+    private Optional<String> parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
-        if (headerAuth != null && headerAuth.startsWith("Bearer ")){
-            return headerAuth.substring(7);
+        if (headerAuth != null && headerAuth.startsWith("Bearer ")) {
+            return Optional.of(headerAuth.substring(7));
         }
-        return null;  //Исправить, но с optional не вариант
+        return Optional.empty();
     }
+
 }
