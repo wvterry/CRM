@@ -17,11 +17,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.test.context.ActiveProfiles;
 
 
 import java.util.List;
 import java.util.Optional;
-
 public class ClientServiceTest {
 
     private static final Long CLIENT_INN_555 = 555L;

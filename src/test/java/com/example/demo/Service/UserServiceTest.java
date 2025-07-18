@@ -26,6 +26,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.*;
 
@@ -142,7 +143,6 @@ public class UserServiceTest {
     private UserDetails userDetails;
     @Mock
     private Authentication authentication;
-
     @Mock
     private RoleRepository roleRepository;
 

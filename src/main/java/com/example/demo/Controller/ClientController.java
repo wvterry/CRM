@@ -21,6 +21,7 @@ public class ClientController {
         this.clientService = clientService;
     }
 
+
     @GetMapping
     public ResponseEntity<List<ClientInfoResponseDTO>> getAllClients(){
         return ResponseEntity.ok(clientService.getAllClients());
