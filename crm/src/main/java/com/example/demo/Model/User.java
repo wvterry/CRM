@@ -14,7 +14,7 @@ import java.util.Set;
 @Setter
 @Table(name = "user_detail")
 public class User {
-
+//
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
@@ -27,7 +27,7 @@ public class User {
 
     @Column(unique = true)
     private String email;
-
+//
     @Column
     private String password;
 

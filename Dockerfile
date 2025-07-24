@@ -3,8 +3,8 @@ FROM maven:3.9.9-amazoncorretto-17-debian AS builder
 WORKDIR /app
 
 # Копируем проект
-COPY pom.xml .
-COPY src ./src
+COPY crm/pom.xml .
+COPY crm/src ./src
 
 # Собираем проект с пропуском тестов
 RUN mvn clean package -DskipTests
