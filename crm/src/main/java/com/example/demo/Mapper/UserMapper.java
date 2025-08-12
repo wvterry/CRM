@@ -9,12 +9,12 @@ import java.util.Set;
 
 public interface UserMapper {
 
-    public User toUser(Set<Role> roles, String password, SignupRequest signupRequest);
-
-    public User toUser(String password, User user, UpdateUserDTO updateUserDTO);
-
-    public User toUser(String password, User user, UpdatePasswordDTO updatePasswordDTO);
+    public User toUser(User user, UpdateUserDTO updateUserDTO);
 
     public UserInfoDTO toUserInfoDTO(User user);
+
+    public CreateUserRequestDTO toCreateUserRequestDTO(SignupRequest signupRequest);
+
+    public User toUser(Long userId, SignupRequest signupRequest);
 
 }

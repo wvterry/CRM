@@ -2,6 +2,7 @@ package com.example.demo.Mapper;
 
 import com.example.demo.DTO.*;
 import com.example.demo.Model.Client;
+import com.example.demo.Model.User;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,11 +18,12 @@ public class ClientMapperImp implements ClientMapper {
         );
     }
 
-    public Client toClient(CreateClientDTO createClientDTO) {
+    public Client toClient(User user, CreateClientDTO createClientDTO) {
         Client client = new Client();
         client.setInn(createClientDTO.getInn());
         client.setName(createClientDTO.getName());
         client.setClientType(createClientDTO.getClientType());
+        client.setManager(user);
         return client;
     }
 

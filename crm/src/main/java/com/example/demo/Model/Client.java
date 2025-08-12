@@ -43,6 +43,7 @@ public class Client {
     @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
     private User manager;
 
+
     public Client(String name, String phone, String email, String address, ClientType clientType, User manager) {
         this.name = name;
         this.phone = phone;

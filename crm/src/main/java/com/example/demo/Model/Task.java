@@ -45,6 +45,7 @@ public class Task {
     @JoinColumn(name = "author_id", referencedColumnName = "userId", nullable = false)
     private User author;
 
+
     public Task(String title, String description, Client client){
         this.title = title;
         this.description = description;
@@ -62,5 +63,12 @@ public class Task {
     public Task(Long id, User assignee) {
         this.id = id;
         this.assignee = assignee;
+    }
+
+    public Task(Long id, TaskStatus taskStatus, User assignee, User author) {
+        this.id = id;
+        this.taskStatus = taskStatus;
+        this.assignee = assignee;
+        this.author = author;
     }
 }

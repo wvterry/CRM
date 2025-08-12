@@ -1,7 +1,9 @@
 package com.example.demo.Controller;
 
 import com.example.demo.DTO.*;
+import com.example.demo.JWT.JwtUtil;
 import com.example.demo.Service.ClientService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +18,12 @@ public class ClientController {
 
     private final ClientService clientService;
 
+    private final JwtUtil jwtUtil;
+
     @Autowired
-    public ClientController(ClientService clientService){
+    public ClientController(ClientService clientService, JwtUtil jwtUtil){
         this.clientService = clientService;
+        this.jwtUtil = jwtUtil;
     }
 
 
@@ -33,8 +38,10 @@ public class ClientController {
     }
 
     @PostMapping
-    public ResponseEntity<Long> createClient(@RequestBody CreateClientDTO createClientDTO){
-        return ResponseEntity.status(HttpStatus.CREATED).body(clientService.saveClient(createClientDTO));
+    public ResponseEntity<Long> createClient(HttpServletRequest httpServletRequest, @RequestBody CreateClientDTO createClientDTO){
+        String token = jwtUtil.getTokenFromRequest(httpServletRequest);
+        String email = jwtUtil.getEmailFromToken(token);
+        return ResponseEntity.status(HttpStatus.CREATED).body(clientService.saveClient(email, createClientDTO));
     }
 
     @DeleteMapping("/{inn}")

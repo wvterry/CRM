@@ -20,8 +20,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build with Maven
-        run: mvn -B clean package -DskipTests
+      - name: Build CRM
+        run: mvn -B clean package -pl crm -am -DskipTests
+
+      - name: Build User Service
+        run: mvn -B clean package -pl user-service -am -DskipTests
 
       - name: Run tests
         run: mvn test

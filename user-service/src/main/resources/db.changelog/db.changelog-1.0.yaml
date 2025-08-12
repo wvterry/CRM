@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-user-table
+      author: EgorZhukov
+      changes:
+        - createTable:
+            tableName: user_info
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false

@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class UpdateUserRoleDTO {
+public class CreateUserResponseDTO {
 
-    private String role;
+    private Long userId;
 }
