@@ -131,7 +131,7 @@ public class UserServiceTest {
         verify(userMapper).toUser(USER1, UPDATE_USER_DTO_1);
         verify(userRepository).save(USER1);
         verify(userMapper).toUserInfoDTO(USER1);
-        verify(kafkaTemplate).send("user_events", ID1.toString(),
+        verify(kafkaTemplate).send("user_updated", ID1.toString(),
                 new UpdateUserEvent("UPDATE_USER", ID1, UPDATE_USER_DTO_1));
     }
 
