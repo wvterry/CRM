@@ -1,13 +1,10 @@
 name: Build and Push Docker Image
 
-#on:
-#  push:
-#    branches:
-#      - main
 on:
-  pull_request:
+  push:
     branches:
       - main
+
 
 jobs:
   docker-build-push:
