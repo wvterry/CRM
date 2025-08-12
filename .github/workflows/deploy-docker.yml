@@ -1,7 +1,11 @@
 name: Build and Push Docker Image
 
+#on:
+#  push:
+#    branches:
+#      - main
 on:
-  push:
+  pull_request:
     branches:
       - main
 
@@ -22,10 +26,18 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Build and Push Docker Image
+      - name: Build and Push CRM Image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./crm/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/crm-app:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/crm-service:latest
+
+      - name: Build and Push User Service Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./user-service/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/user-service:latest
