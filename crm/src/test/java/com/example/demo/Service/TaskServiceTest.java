@@ -197,11 +197,15 @@ public class TaskServiceTest {
     @Test
     void testSaveTask_ClientNotFound_ThrowsException(){
         // Arrange
+        when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_1));
+        when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(USER_1));
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.empty());
 
         // Assert
         assertThrows(NotFoundException.class, () -> taskService.saveTask(EMAIL_1, TASK_CREATE_DTO_1, CLIENT_INN_1));
         verify(clientRepository).findByInn(CLIENT_INN_1);
+        verify(accountRepository).findByEmail(EMAIL_1);
+        verify(userRepository).findById(USER_ID_1);
     }
 
     @Test

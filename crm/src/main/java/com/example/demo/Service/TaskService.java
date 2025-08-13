@@ -119,19 +119,15 @@ public class TaskService {
     public TaskResponseDTO changeStatus(String email,
                                         Long taskId,
                                         TaskStatusDTO taskStatusDTO) throws AccessDeniedException {
-        // тут я найду юзера и акк
         User user = getUserFromAccountEmail(email);
         Account account = accountRepository.findByEmail(email).orElseThrow(
                 ()-> new NotFoundException("Аккаунт с email " + email + " не найден"));
 
-        //тут я найду таску
         Task task = taskRepository.findById(taskId).orElseThrow(() ->
                 new NotFoundException("Задача не найдена"));
 
-        //тут я узнаю новый статус
         TaskStatus taskStatus = taskStatusDTO.getNewTaskStatus();
 
-        //тут будет основная логика
         if (Objects.requireNonNull(taskStatus) == TaskStatus.ARCHIVE) {
             boolean isAuthor = Objects.equals(task.getAuthor().getUserId(), user.getUserId());
             boolean isAdminOrManager = account
