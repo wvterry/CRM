@@ -6,6 +6,7 @@ import com.example.demo.DTO.TaskUpdateDTO;
 import com.example.demo.Enum.TaskStatus;
 import com.example.demo.Model.Client;
 import com.example.demo.Model.Task;
+import com.example.demo.Model.User;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -25,13 +26,15 @@ public class TaskMapperImp implements TaskMapper {
             return taskResponseDTO;
     }
 
-    public Task toTask(TaskCreateDTO taskCreateDTO, Client client){
+    public Task toTask(TaskCreateDTO taskCreateDTO, Client client, User authorAndAssignee){
         Task task = new Task();
         task.setTitle(taskCreateDTO.getTitle());
         task.setDescription(taskCreateDTO.getDescription());
         task.setClient(client);
         task.setTaskStatus(TaskStatus.NEW);
         task.setCreatedAt(LocalDateTime.now());
+        task.setAuthor(authorAndAssignee);
+        task.setAssignee(authorAndAssignee);
         return task;
     }
 

@@ -46,13 +46,11 @@ public class TaskServiceTest {
 
     private static final Account ACCOUNT_1 = new Account(1L,
             "ivan@mail.com",
-//            USER_ID_1,
             USER_1,
             Set.of(USER_ROLE));
 
     private static final Account ACCOUNT_2 = new Account(2L,
             "egor@mail.com",
-//            USER_ID_2,
             USER_2,
             Set.of(ADMIN_ROLE));
     private static final TaskResponseDTO TASK_RESPONSE_DTO_1 = new TaskResponseDTO(TASK_ID_1,
@@ -180,17 +178,19 @@ public class TaskServiceTest {
     @Test
     void testSaveTask_ClientExists_TaskSaved(){
         // Arrange
+        when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_1));
+        when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(USER_1));
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.of(CLIENT_1));
-        when(taskMapper.toTask(TASK_CREATE_DTO_1, CLIENT_1)).thenReturn(TASK_1);
+        when(taskMapper.toTask(TASK_CREATE_DTO_1, CLIENT_1, USER_1)).thenReturn(TASK_1);
 
         // Act
-        Long savedId = taskService.saveTask(TASK_CREATE_DTO_1, CLIENT_INN_1);
+        Long savedId = taskService.saveTask(EMAIL_1, TASK_CREATE_DTO_1, CLIENT_INN_1);
 
         // Assert
         assertNotNull(savedId);
         assertEquals(1L, savedId);
         verify(taskRepository).save(TASK_1);
-        verify(taskMapper).toTask(TASK_CREATE_DTO_1, CLIENT_1);
+        verify(taskMapper).toTask(TASK_CREATE_DTO_1, CLIENT_1, USER_1);
         verify(clientRepository).findByInn(CLIENT_INN_1);
     }
 
@@ -200,7 +200,7 @@ public class TaskServiceTest {
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.empty());
 
         // Assert
-        assertThrows(NotFoundException.class, () -> taskService.saveTask(TASK_CREATE_DTO_1, CLIENT_INN_1));
+        assertThrows(NotFoundException.class, () -> taskService.saveTask(EMAIL_1, TASK_CREATE_DTO_1, CLIENT_INN_1));
         verify(clientRepository).findByInn(CLIENT_INN_1);
     }
 

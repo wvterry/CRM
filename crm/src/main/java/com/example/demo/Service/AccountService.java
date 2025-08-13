@@ -4,6 +4,7 @@ import com.example.demo.DTO.*;
 import com.example.demo.Exception.NotFoundException;
 import com.example.demo.Feign.UserClient;
 import com.example.demo.JWT.AuthRequest;
+import com.example.demo.JWT.CustomUserDetailsService;
 import com.example.demo.JWT.JwtUtil;
 import com.example.demo.JWT.SignupRequest;
 import com.example.demo.Mapper.AccountMapper;
@@ -15,6 +16,7 @@ import com.example.demo.Repository.AccountRepository;
 import com.example.demo.Repository.RoleRepository;
 import com.example.demo.Repository.UserRepository;
 import feign.FeignException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,6 +31,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+
+
+@Slf4j
 @Service
 public class AccountService {
 
@@ -42,6 +47,8 @@ public class AccountService {
     private final AccountMapper accountMapper;
     AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final CustomUserDetailsService userDetailsService;
+
 
 
     @Autowired
@@ -53,7 +60,8 @@ public class AccountService {
                           RoleRepository roleRepository,
                           AccountMapper accountMapper,
                           AuthenticationManager authenticationManager,
-                          JwtUtil jwtUtil) {
+                          JwtUtil jwtUtil,
+                          CustomUserDetailsService userDetailsService) {
         this.accountRepository = accountRepository;
         this.userClient = userClient;
         this.userRepository = userRepository;
@@ -63,6 +71,7 @@ public class AccountService {
         this.accountMapper = accountMapper;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
+        this.userDetailsService = userDetailsService;
     }
 
     @Transactional
@@ -110,6 +119,7 @@ public class AccountService {
                         authRequest.getPassword()));
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
         return jwtUtil.generateToken(userDetails.getUsername(), userDetails.getAuthorities());
     }
 

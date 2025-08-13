@@ -48,17 +48,16 @@ public class ClientMapperImp implements ClientMapper {
         return clientWithTasksDTO;
     }
 
+
     public Client toClient(Client clientForUpdate, ClientForUpdateDTO clientForUpdateDTO){
-        Client client = new Client();
-        client.setInn(clientForUpdate.getInn());
-        client.setPhone(clientForUpdateDTO.getPhone());
-        client.setEmail(clientForUpdateDTO.getEmail());
-        client.setAddress(clientForUpdateDTO.getAddress());
-        client.setName(clientForUpdateDTO.getName());
-        client.setClientType(clientForUpdate.getClientType());
-        client.setTasks(clientForUpdate.getTasks());
-        return client;
+        clientForUpdate.setPhone(clientForUpdateDTO.getPhone());
+        clientForUpdate.setEmail(clientForUpdateDTO.getEmail());
+        clientForUpdate.setAddress(clientForUpdateDTO.getAddress());
+        clientForUpdate.setName(clientForUpdateDTO.getName());
+        return clientForUpdate;
     }
+
+
 
     public ClientResponseDTO toClientResponseDTO(Client client){
         ClientResponseDTO clientResponseDTO = new ClientResponseDTO();

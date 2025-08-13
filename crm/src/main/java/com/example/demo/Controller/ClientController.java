@@ -33,7 +33,7 @@ public class ClientController {
     }
 
     @GetMapping("/{inn}")
-    public ResponseEntity<ClientResponseDTO> getClientByInn(@PathVariable Long inn){
+    public ResponseEntity<ClientResponseDTO> getClientByInn(@PathVariable("inn") Long inn){
         return ResponseEntity.ok(clientService.getClientByInn(inn));
     }
 
@@ -45,19 +45,19 @@ public class ClientController {
     }
 
     @DeleteMapping("/{inn}")
-    @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<Void> deleteClient(@PathVariable Long inn){
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteClient(@PathVariable("inn") Long inn){
         clientService.deleteClientByInn(inn);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/cat/{inn}")
-    public ResponseEntity<ClientWithTasksDTO> getClientsWithHisTasks(@PathVariable Long inn) {
+    public ResponseEntity<ClientWithTasksDTO> getClientsWithHisTasks(@PathVariable("inn") Long inn) {
         return ResponseEntity.ok(clientService.getClientsAndHisTasks(inn));
     }
 
     @PutMapping("/{inn}")
-    public ResponseEntity<ClientResponseDTO> updateClient(@PathVariable Long inn,
+    public ResponseEntity<ClientResponseDTO> updateClient(@PathVariable("inn") Long inn,
                                                           @RequestBody ClientForUpdateDTO clientForUpdateDTO)
     {
         ClientResponseDTO clientResponseDTO = clientService.updateClient(inn, clientForUpdateDTO);

@@ -5,10 +5,11 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@ToString(exclude = "user")  // исключаем user из toString
+@ToString(exclude = "user")
 @EqualsAndHashCode
 @Setter
 @Getter
@@ -35,7 +36,7 @@ public class Account {
     @JoinTable(name = "account_roles",
             joinColumns = @JoinColumn(name = "account_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles;
+    private Set<Role> roles = new HashSet<>();
 
     @CreationTimestamp
     private LocalDateTime createdAt;

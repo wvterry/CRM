@@ -44,7 +44,6 @@ public class UserService {
                         userId,
                 updateUserDTO);
 
-//        kafkaTemplate.send("user_events", userId.toString(), userEvent);
         kafkaTemplate.send("user_updated", userId.toString(), userEvent);
 
         return userMapper.toUserInfoDTO(user);

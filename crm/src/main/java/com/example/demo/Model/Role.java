@@ -22,10 +22,6 @@ public class Role {
     @Column
     private String name;
 
-    @ManyToMany(mappedBy = "roles")
-    private Set<Account> accounts = new HashSet<>();
-
-
     public Role(String name) {
         this.name = name;
     }

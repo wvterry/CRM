@@ -78,7 +78,6 @@ public class KafkaConfig {
 
         return errorHandler;
     }
-    ///////
 
     @Bean
     public NewTopic userUpdatedTopic() {

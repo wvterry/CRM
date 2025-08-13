@@ -22,7 +22,6 @@ public class UserEventListener {
         this.accountService = accountService;
     }
 
-//    @KafkaListener(topics = "user_events", groupId = "user-service-group")
 @KafkaListener(topics = "user_updated", groupId = "user-service-group")
     public void handleUpdateUser(UpdateUserEvent event){
         try {

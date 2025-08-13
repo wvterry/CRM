@@ -51,9 +51,10 @@ public class TaskService {
     }
 
     @Transactional
-    public Long saveTask(TaskCreateDTO taskCreateDTO, Long inn){
+    public Long saveTask(String email, TaskCreateDTO taskCreateDTO, Long inn){
+        User authorAndAssignee = getUserFromAccountEmail(email);
         Client client = clientRepository.findByInn(inn).orElseThrow(() -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
-        Task taskToSave = taskMapper.toTask(taskCreateDTO, client);
+        Task taskToSave = taskMapper.toTask(taskCreateDTO, client, authorAndAssignee);
         taskRepository.save(taskToSave);
         return taskToSave.getId();
     }
@@ -185,6 +186,7 @@ public class TaskService {
                 ()-> new NotFoundException("Аккаунт с email " + email + " не найден"));
         User user = userRepository.findById(account.getUser().getUserId()).orElseThrow(
                 ()-> new NotFoundException("Пользователь с id " + account.getUser().getUserId() + " не найден"));
+        System.out.println("User loaded: " + user.getFirstName() + " " + user.getLastName());
 
         return user;
     }

@@ -53,6 +53,9 @@ public class ClientService {
     @Transactional
     public Long saveClient(String email, CreateClientDTO createClientDTO){
 
+        if (clientRepository.findByInn(createClientDTO.getInn()).isPresent()){
+            throw new RuntimeException("Клиент с таким ИНН уже есть в системе");
+        }
         Account account = accountRepository.findByEmail(email).orElseThrow(
                 () -> new NotFoundException("Аккаунт не найден"));
         User user = userRepository.findById(account.getUser().getUserId()).orElseThrow(

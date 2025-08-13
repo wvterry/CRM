@@ -1,7 +1,6 @@
 
 FROM maven:3.9.9-amazoncorretto-17-debian AS builder
 
-# 1. Сначала копируем только POM-файлы
 WORKDIR /app
 COPY crm/pom.xml ./crm/
 COPY pom.xml .
@@ -9,10 +8,8 @@ COPY user-service/pom.xml ./user-service/
 
 RUN mvn dependency:go-offline -B
 
-# 3. Копируем исходный код
 COPY . .
 
-# 4. Собираем приложение
 RUN mvn package -pl crm -am -DskipTests
 
 FROM eclipse-temurin:17.0.3_7-jre

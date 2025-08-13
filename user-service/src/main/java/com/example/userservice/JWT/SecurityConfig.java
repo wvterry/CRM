@@ -34,13 +34,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers("/api/user").permitAll() // Разрешить создание пользователя
-//                        .requestMatchers("/api/internal/**").hasRole("INTERNAL") // Для внутренних вызовов
-//                        .anyRequest().authenticated()
-
                                 .requestMatchers(HttpMethod.POST, "/api/user/internal").hasAuthority("ROLE_INTERNAL")
-
-
                                 .requestMatchers(HttpMethod.PUT, "/api/user/update/**").authenticated()
                                 .requestMatchers(HttpMethod.DELETE, "/api/user/**").authenticated()
                                 .requestMatchers(HttpMethod.GET, "/api/user").authenticated()

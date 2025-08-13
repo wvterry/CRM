@@ -31,25 +31,29 @@ public class TaskController {
     }
 
     @GetMapping("/client/{inn}")
-    public ResponseEntity<List<TaskResponseDTO>> getAllTasksByClientInn(@PathVariable Long inn){
+    public ResponseEntity<List<TaskResponseDTO>> getAllTasksByClientInn(@PathVariable("inn") Long inn){
         return ResponseEntity.ok(taskService.getAllTasksByClientInn(inn));
     }
 
     @PostMapping("/create/{inn}")
-    public ResponseEntity<Long> createTask(@PathVariable Long inn, @RequestBody TaskCreateDTO taskCreateDTO){
-        Long taskId = taskService.saveTask(taskCreateDTO, inn);
+    public ResponseEntity<Long> createTask(HttpServletRequest httpServletRequest,
+                                           @PathVariable("inn") Long inn,
+                                           @RequestBody TaskCreateDTO taskCreateDTO){
+        String token = jwtUtil.getTokenFromRequest(httpServletRequest);
+        String email = jwtUtil.getEmailFromToken(token);
+        Long taskId = taskService.saveTask(email, taskCreateDTO, inn);
         return ResponseEntity.ok(taskId);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable Long id,@RequestBody TaskUpdateDTO taskUpdateDTO){
+    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable("id") Long id,@RequestBody TaskUpdateDTO taskUpdateDTO){
         TaskResponseDTO taskForUpdate = taskService.updateTask(id, taskUpdateDTO);
         return ResponseEntity.ok(taskForUpdate);
     }
 
     @PutMapping("/change/status/{id}")
     public ResponseEntity<TaskResponseDTO> changeStatus(HttpServletRequest httpServletRequest,
-                                                        @PathVariable Long id,
+                                                        @PathVariable("id") Long id,
                                                         @RequestBody TaskStatusDTO taskStatusDTO) throws AccessDeniedException {
         String token = jwtUtil.getTokenFromRequest(httpServletRequest);
         String email = jwtUtil.getEmailFromToken(token);
@@ -58,7 +62,7 @@ public class TaskController {
 
     @PutMapping("/change/assignee/{id}")
     public ResponseEntity<TaskResponseDTO> changeAssignee(HttpServletRequest httpServletRequest,
-                                               @PathVariable Long id,
+                                               @PathVariable("id") Long id,
                                                @RequestBody TaskAssigneeDTO taskAssigneeDTO) throws AccessDeniedException {
         String token = jwtUtil.getTokenFromRequest(httpServletRequest);
         String email = jwtUtil.getEmailFromToken(token);

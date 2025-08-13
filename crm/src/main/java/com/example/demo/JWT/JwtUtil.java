@@ -9,6 +9,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,8 +53,9 @@ public class JwtUtil {
     }
 
     public String generateToken(String email, Collection<? extends GrantedAuthority> authorities){
-        Account account = accountRepository.findByEmail(email).orElseThrow(
+        Account account = accountRepository.findByEmailWithRoles(email).orElseThrow(
                 () -> new NotFoundException("Пользователь с email " + email + " не найден"));
+
         return Jwts.builder()
                 .setSubject(email)
                 .claim("authorities", authorities.stream()
@@ -65,6 +67,7 @@ public class JwtUtil {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
+
 
     public List<GrantedAuthority> getAuthorityFromToken(String token){
 
