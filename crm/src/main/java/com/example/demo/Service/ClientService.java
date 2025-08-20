@@ -51,17 +51,18 @@ public class ClientService {
     }
 
     @Transactional
-    public Long saveClient(String email, CreateClientDTO createClientDTO){
+    public Long saveClient(String creatorEmail, CreateClientDTO createClientDTO){
 
         if (clientRepository.findByInn(createClientDTO.getInn()).isPresent()){
             throw new RuntimeException("Клиент с таким ИНН уже есть в системе");
         }
-        Account account = accountRepository.findByEmail(email).orElseThrow(
-                () -> new NotFoundException("Аккаунт не найден"));
-        User user = userRepository.findById(account.getUser().getUserId()).orElseThrow(
-                () -> new NotFoundException("Пользователь не найден"));
+        Account account = accountRepository.findByEmail(creatorEmail).get();
+        User user = userRepository.findById(account.getUser().getUserId()).get();
 
-        clientRepository.save(clientMapper.toClient(user, createClientDTO));
+        Client client = clientMapper.toClient(createClientDTO);
+        client.setManager(user);
+
+        clientRepository.save(client);
         return createClientDTO.getInn();
     }
 
@@ -86,7 +87,13 @@ public class ClientService {
         Client clientForUpdate = clientRepository
                 .findByInn(inn)
                 .orElseThrow(() -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
-        clientRepository.save(clientMapper.toClient(clientForUpdate, clientForUpdateDTO));
+
+        clientForUpdate.setPhone(clientForUpdateDTO.getPhone());
+        clientForUpdate.setEmail(clientForUpdateDTO.getEmail());
+        clientForUpdate.setAddress(clientForUpdateDTO.getAddress());
+        clientForUpdate.setName(clientForUpdateDTO.getName());
+
+        clientRepository.save(clientForUpdate);
         return clientMapper.toClientResponseDTO(clientForUpdate);
     }
 }

@@ -40,8 +40,8 @@ public class ClientController {
     @PostMapping
     public ResponseEntity<Long> createClient(HttpServletRequest httpServletRequest, @RequestBody CreateClientDTO createClientDTO){
         String token = jwtUtil.getTokenFromRequest(httpServletRequest);
-        String email = jwtUtil.getEmailFromToken(token);
-        return ResponseEntity.status(HttpStatus.CREATED).body(clientService.saveClient(email, createClientDTO));
+        String creatorEmail = jwtUtil.getEmailFromToken(token);
+        return ResponseEntity.status(HttpStatus.CREATED).body(clientService.saveClient(creatorEmail, createClientDTO));
     }
 
     @DeleteMapping("/{inn}")

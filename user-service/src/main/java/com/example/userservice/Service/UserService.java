@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 
@@ -26,47 +27,61 @@ public class UserService {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
+    private final TransactionTemplate transactionTemplate;
+
     @Autowired
-    public UserService(UserRepository userRepository, UserMapper userMapper, KafkaTemplate<String, Object> kafkaTemplate) {
+    public UserService(UserRepository userRepository,
+                       UserMapper userMapper,
+                       KafkaTemplate<String, Object> kafkaTemplate,
+                       TransactionTemplate transactionTemplate) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.kafkaTemplate = kafkaTemplate;
+        this.transactionTemplate = transactionTemplate;
     }
 
-    @Transactional
-    public UserInfoDTO updateUser(Long userId, UpdateUserDTO updateUserDTO){
-        User user = userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Пользователь с id " + userId + " не найден"));
-        userRepository.save(userMapper.toUser(user, updateUserDTO));
+    public UserInfoDTO updateUser(Long userId, UpdateUserDTO updateUserDTO) {
+        UserInfoDTO userInfoDTO = transactionTemplate.execute(status -> {
 
-                UpdateUserEvent userEvent = new UpdateUserEvent(
+                    User user = userRepository.findById(userId).orElseThrow(() ->
+                            new NotFoundException("Пользователь с id " + userId + " не найден"));
+
+                    user.setFirstName(updateUserDTO.getFirstName());
+                    user.setLastName(updateUserDTO.getLastName());
+                    userRepository.save(user);
+
+            return userMapper.toUserInfoDTO(user);
+                });
+
+        UpdateUserEvent userEvent = new UpdateUserEvent(
                 "UPDATE_USER",
-                        userId,
+                userId,
                 updateUserDTO);
 
         kafkaTemplate.send("user_updated", userId.toString(), userEvent);
 
-        return userMapper.toUserInfoDTO(user);
+        return userInfoDTO;
     }
 
     @Transactional
-    public UserIdResponseDTO createUser(CreateUserDTO createUserDTO){
-       User user = userRepository.save(userMapper.toUser(createUserDTO));
-       return userMapper.toUserIdResponseDTO(user);
+    public UserIdResponseDTO createUser(CreateUserDTO createUserDTO) {
+        User user = userRepository.save(userMapper.toUser(createUserDTO));
+        return userMapper.toUserIdResponseDTO(user);
     }
 
     @Transactional
-    public void deleteUser(Long id){
-        User user = userRepository.findById(id).orElseThrow(
+    public void deleteUser(Long id) {
+        transactionTemplate.executeWithoutResult(transactionStatus -> {User user = userRepository.findById(id).orElseThrow(
                 () -> new NotFoundException("Пользователь с id " + id + " не найден"));
-    userRepository.delete(user);
+            userRepository.delete(user);
+        });
 
-        DeleteUserEvent deleteUserEvent = new DeleteUserEvent("DELETE_USER", id);
+        DeleteUserEvent deleteUserEvent = new DeleteUserEvent(id);
         kafkaTemplate.send("user_deleted", id.toString(), deleteUserEvent);
     }
 
     @Transactional(readOnly = true)
-    public List<UserInfoDTO> getAll(){
+    public List<UserInfoDTO> getAll() {
         return userRepository.findAll().stream().map(userMapper::toUserInfoDTO).toList();
     }
 

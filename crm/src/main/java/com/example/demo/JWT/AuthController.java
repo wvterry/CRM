@@ -37,7 +37,7 @@ public class AuthController {
 
     @PutMapping("/updatepass")
     public ResponseEntity<Void> updatePassword(HttpServletRequest httpServletRequest,
-                                               @RequestBody UpdatePasswordDTO updatePasswordDTO){
+                                               @RequestBody UpdatePasswordDTO updatePasswordDTO) throws BadRequestException{
         String token = jwtUtil.getTokenFromRequest(httpServletRequest);
         String email = jwtUtil.getEmailFromToken(token);
         accountService.updatePass(email, updatePasswordDTO);
@@ -46,7 +46,7 @@ public class AuthController {
 
     @PutMapping("/updaterole/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> updateAccountRole(@PathVariable Long accountId,
+    public ResponseEntity<Void> updateAccountRole(@PathVariable("id") Long accountId,
                                                   @RequestBody UpdateAccountRoleDTO updateAccountRoleDTO){
         accountService.updateRole(accountId, updateAccountRoleDTO);
         return ResponseEntity.ok().build();

@@ -9,9 +9,5 @@ import java.util.Set;
 
 public interface AccountMapper {
 
-    public Account toAccount(User user, Long userId, Set roles, String password, SignupRequest signupRequest);
-
-    public Account toAccount(String password, Account account);
-
-    public AccountInfoDTO toAccountInfoDTO(Account account, User user);
+    public AccountInfoDTO toAccountInfoDTO(Account account);
 }

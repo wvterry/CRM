@@ -13,9 +13,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     boolean existsByEmail(String email);
 
-    @Query("SELECT a FROM Account a WHERE a.user.userId = :userId")
-    Optional<Account> findByUserId(@Param("userId") Long userId);
+    Optional<Account> findByUserUserId(Long userId);
 
-    @Query("SELECT DISTINCT a FROM Account a LEFT JOIN FETCH a.roles WHERE a.email = :email")
-    Optional<Account> findByEmailWithRoles(@Param("email") String email);
 }

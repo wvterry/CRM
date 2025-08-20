@@ -53,7 +53,7 @@ public class JwtUtil {
     }
 
     public String generateToken(String email, Collection<? extends GrantedAuthority> authorities){
-        Account account = accountRepository.findByEmailWithRoles(email).orElseThrow(
+        Account account = accountRepository.findByEmail(email).orElseThrow(
                 () -> new NotFoundException("Пользователь с email " + email + " не найден"));
 
         return Jwts.builder()

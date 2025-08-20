@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -54,7 +55,16 @@ public class TaskService {
     public Long saveTask(String email, TaskCreateDTO taskCreateDTO, Long inn){
         User authorAndAssignee = getUserFromAccountEmail(email);
         Client client = clientRepository.findByInn(inn).orElseThrow(() -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
-        Task taskToSave = taskMapper.toTask(taskCreateDTO, client, authorAndAssignee);
+
+        Task taskToSave = new Task();
+        taskToSave.setTitle(taskCreateDTO.getTitle());
+        taskToSave.setDescription(taskCreateDTO.getDescription());
+        taskToSave.setClient(client);
+        taskToSave.setTaskStatus(TaskStatus.NEW);
+        taskToSave.setCreatedAt(LocalDateTime.now());
+        taskToSave.setAuthor(authorAndAssignee);
+        taskToSave.setAssignee(authorAndAssignee);
+
         taskRepository.save(taskToSave);
         return taskToSave.getId();
     }
@@ -69,7 +79,8 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<TaskResponseDTO> getAllTasksByClientInn(Long clientInn){
-        Client client = clientRepository.findByInn(clientInn).orElseThrow(() -> new NotFoundException("Клиент с ИНН " + clientInn + " не найден"));
+        Client client = clientRepository.findByInn(clientInn).orElseThrow(
+                () -> new NotFoundException("Клиент с ИНН " + clientInn + " не найден"));
         return taskRepository.findByClientInn(client.getInn())
                 .stream()
                 .map(taskMapper::toTaskResponseDTO)
@@ -78,13 +89,12 @@ public class TaskService {
 
     @Transactional
     public TaskResponseDTO updateTask(Long id, TaskUpdateDTO taskUpdateDTO){
-        Optional<Task> taskForUpdate = taskRepository.findById(id);
-        if (taskForUpdate.isEmpty()){
-            throw new NotFoundException("Задача с ID " + id + " не найдена");
-        }
-        Task updatedTask = taskMapper.toTask(taskUpdateDTO, taskForUpdate.get());
-        taskRepository.save(updatedTask);
-        return taskMapper.toTaskResponseDTO(updatedTask);
+        Task taskForUpdate = taskRepository.findById(id).orElseThrow(
+                () -> new NotFoundException("Задача с id " + id + " не найдена"));
+        taskForUpdate.setTitle(taskUpdateDTO.getTitle());
+        taskForUpdate.setDescription(taskUpdateDTO.getDescription());
+        taskRepository.save(taskForUpdate);
+        return taskMapper.toTaskResponseDTO(taskForUpdate);
     }
 
     @Transactional(readOnly = true)

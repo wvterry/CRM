@@ -15,15 +15,6 @@ import java.util.Set;
 public class UserMapperImp implements UserMapper{
 
     @Override
-    public User toUser(User user, UpdateUserDTO updateUserDTO) {
-        User updatedUser = new User();
-        updatedUser.setUserId(user.getUserId());
-        updatedUser.setFirstName(updateUserDTO.getFirstName());
-        updatedUser.setLastName(updateUserDTO.getLastName());
-        return updatedUser;
-    }
-
-    @Override
     public UserInfoDTO toUserInfoDTO(User user) {
         UserInfoDTO userInfoDTO = new UserInfoDTO();
         userInfoDTO.setFirstName(user.getFirstName());
@@ -39,12 +30,4 @@ public class UserMapperImp implements UserMapper{
         return createUserRequestDTO;
     }
 
-    @Override
-    public User toUser(Long userId, SignupRequest signupRequest) {
-        User user = new User();
-        user.setUserId(userId);
-        user.setFirstName(signupRequest.getFirstName());
-        user.setLastName(signupRequest.getLastName());
-        return user;
-    }
 }

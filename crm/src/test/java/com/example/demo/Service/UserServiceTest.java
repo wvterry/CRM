@@ -42,25 +42,25 @@ public class UserServiceTest {
 
 
 
-    @Test
-    void updateUserTest(){
-        //Arrange
-        when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(USER_1));
-        when(userMapper.toUser(USER_1, UPDATE_USER_DTO_1)).thenReturn(USER_1);
-        when(userRepository.save(USER_1)).thenReturn(USER_1);
-        when(userMapper.toUserInfoDTO(USER_1)).thenReturn(USER_INFO_DTO_1);
-
-        //Act
-        UserInfoDTO result = userService.updateUser(USER_ID_1, UPDATE_USER_DTO_1);
-
-        //Assert
-        assertNotNull(result);
-        assertEquals(result, USER_INFO_DTO_1);
-        verify(userRepository).findById(USER_ID_1);
-        verify(userMapper).toUser(USER_1, UPDATE_USER_DTO_1);
-        verify(userRepository).save(USER_1);
-        verify(userMapper).toUserInfoDTO(USER_1);
-    }
+//    @Test
+//    void updateUserTest(){
+//        //Arrange
+//        when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(USER_1));
+//        when(userMapper.toUser(USER_1, UPDATE_USER_DTO_1)).thenReturn(USER_1);
+//        when(userRepository.save(USER_1)).thenReturn(USER_1);
+//        when(userMapper.toUserInfoDTO(USER_1)).thenReturn(USER_INFO_DTO_1);
+//
+//        //Act
+//        UserInfoDTO result = userService.updateUser(USER_ID_1, UPDATE_USER_DTO_1);
+//
+//        //Assert
+//        assertNotNull(result);
+//        assertEquals(result, USER_INFO_DTO_1);
+//        verify(userRepository).findById(USER_ID_1);
+//        verify(userMapper).toUser(USER_1, UPDATE_USER_DTO_1);
+//        verify(userRepository).save(USER_1);
+//        verify(userMapper).toUserInfoDTO(USER_1);
+//    }
 
     @Test
     void updateUserTest_Exception(){

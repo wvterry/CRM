@@ -42,14 +42,9 @@ public class UserEventListener {
     @KafkaListener(topics = "user_deleted", groupId = "user-service-group")
     public void handleDeleteUser(DeleteUserEvent event){
         try {
-            log.info("Received event: {} for user {}", event.type(), event.userId());
-
-            if ("DELETE_USER".equals(event.type())) {
+            log.info("Received event: delete for user {}", event.userId());
                 accountService.deleteAccount(event.userId());
                 log.info("User {} deleted successfully", event.userId());
-            } else {
-                log.warn("Unknown event type: {}", event.type());
-            }
         } catch (Exception e) {
             log.error("Failed to process DeleteUserEvent for userId={}", event.userId(), e);
             throw e;

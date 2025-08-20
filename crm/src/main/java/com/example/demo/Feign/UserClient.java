@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 public interface UserClient {
 
-    @PostMapping("/internal")
+    @PostMapping
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1000))
     CreateUserResponseDTO createUser(@RequestBody CreateUserRequestDTO request);
 

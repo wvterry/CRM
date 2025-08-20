@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 @Table(name = "Task")
 public class Task {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

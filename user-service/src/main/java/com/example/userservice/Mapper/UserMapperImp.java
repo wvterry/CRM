@@ -33,10 +33,4 @@ public class UserMapperImp implements UserMapper{
         return userIdResponseDTO;
     }
 
-    @Override
-    public User toUser(User user, UpdateUserDTO updateUserDTO) {
-        user.setFirstName(updateUserDTO.getFirstName());
-        user.setLastName(updateUserDTO.getLastName());
-        return user;
-    }
 }

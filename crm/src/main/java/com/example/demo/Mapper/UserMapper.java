@@ -9,12 +9,8 @@ import java.util.Set;
 
 public interface UserMapper {
 
-    public User toUser(User user, UpdateUserDTO updateUserDTO);
-
     public UserInfoDTO toUserInfoDTO(User user);
 
     public CreateUserRequestDTO toCreateUserRequestDTO(SignupRequest signupRequest);
-
-    public User toUser(Long userId, SignupRequest signupRequest);
 
 }

@@ -14,10 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/account")
 public class AccountController {
-
-
     private final JwtUtil jwtUtil;
-
     private final AccountService accountService;
 
     @Autowired
@@ -25,7 +22,6 @@ public class AccountController {
         this.jwtUtil = jwtUtil;
         this.accountService = accountService;
     }
-
 
     @PutMapping("/updateemail")
     public ResponseEntity<AccountInfoDTO> updateEmail(HttpServletRequest httpServletRequest,
@@ -40,6 +36,5 @@ public class AccountController {
     public ResponseEntity<List<AccountInfoDTO>> getAllAccounts(){
         return ResponseEntity.ok(accountService.getAll());
     }
-
 
 }

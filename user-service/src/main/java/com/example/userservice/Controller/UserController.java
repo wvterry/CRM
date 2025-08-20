@@ -17,31 +17,31 @@ import java.util.List;
 @RequestMapping("/api/user")
 public class UserController {
 
- private final UserService userService;
+    private final UserService userService;
 
- @Autowired
- public UserController(UserService userService) {
-  this.userService = userService;
- }
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
- @PutMapping("/update/{id}")
- public ResponseEntity<UserInfoDTO> updateUser(@PathVariable("id") Long id,@Valid @RequestBody UpdateUserDTO updateUserDTO){
-  return ResponseEntity.ok(userService.updateUser(id, updateUserDTO));
- }
+    @PutMapping("/update/{id}")
+    public ResponseEntity<UserInfoDTO> updateUser(@PathVariable("id") Long id, @Valid @RequestBody UpdateUserDTO updateUserDTO) {
+        return ResponseEntity.ok(userService.updateUser(id, updateUserDTO));
+    }
 
- @PostMapping("/internal")
- public ResponseEntity<UserIdResponseDTO> createUser(@Valid @RequestBody CreateUserDTO createUserDTO){
-    return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(createUserDTO));
- }
+    @PostMapping
+    public ResponseEntity<UserIdResponseDTO> createUser(@Valid @RequestBody CreateUserDTO createUserDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(createUserDTO));
+    }
 
- @DeleteMapping("/{id}")
- public void deleteUser(@PathVariable("id") Long id){
-  userService.deleteUser(id);
- }
+    @DeleteMapping("/{id}")
+    public void deleteUser(@PathVariable("id") Long id) {
+        userService.deleteUser(id);
+    }
 
- @GetMapping
- public ResponseEntity<List<UserInfoDTO>> getAllUsers(){
-  return ResponseEntity.ok(userService.getAll());
- }
+    @GetMapping
+    public ResponseEntity<List<UserInfoDTO>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAll());
+    }
 
 }

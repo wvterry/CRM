@@ -26,30 +26,28 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 
-
 @Slf4j
 @Service
 public class AccountService {
-
-
     private final AccountRepository accountRepository;
     private final UserClient userClient;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final AccountMapper accountMapper;
-    AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final CustomUserDetailsService userDetailsService;
-
-
+    private final UserService userService;
+    private final TransactionTemplate transactionTemplate;
 
     @Autowired
     public AccountService(AccountRepository accountRepository,
@@ -61,7 +59,8 @@ public class AccountService {
                           AccountMapper accountMapper,
                           AuthenticationManager authenticationManager,
                           JwtUtil jwtUtil,
-                          CustomUserDetailsService userDetailsService) {
+                          UserService userService,
+                          TransactionTemplate transactionTemplate) {
         this.accountRepository = accountRepository;
         this.userClient = userClient;
         this.userRepository = userRepository;
@@ -71,7 +70,8 @@ public class AccountService {
         this.accountMapper = accountMapper;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
-        this.userDetailsService = userDetailsService;
+        this.userService = userService;
+        this.transactionTemplate = transactionTemplate;
     }
 
     @Transactional
@@ -80,31 +80,30 @@ public class AccountService {
             throw new BadRequestException("Аккаунт с email " + signupRequest.getEmail() + " уже зарегистрирован");
         }
 
-        Long userId = null;
-        try {
-            CreateUserResponseDTO createUserRequestDTO = userClient.createUser(userMapper.toCreateUserRequestDTO(signupRequest));
-            userId = createUserRequestDTO.getUserId();
-        } catch (FeignException.Conflict e) {
-            throw new BadRequestException("Пользователь с email " + signupRequest.getEmail() + " уже зарегистрирован");
-        }
-
-        User user = userRepository.save(userMapper.toUser(userId, signupRequest));
-
+        User user = userService.saveUser(signupRequest);
         String password = passwordEncoder.encode(signupRequest.getPassword());
         Set<Role> roles = new HashSet<>();
         Role accountRole = roleRepository.findByName("USER").orElseThrow(
                 () -> new NotFoundException("Роль отсутствует"));
         roles.add(accountRole);
 
+        Account accountToSave = new Account();
+        accountToSave.setEmail(signupRequest.getEmail());
+        accountToSave.setPassword(password);
+        accountToSave.setRoles(roles);
+        accountToSave.setUser(user);
+        accountToSave.setCreatedAt(LocalDateTime.now());
+
         try {
-            accountRepository.save(accountMapper.toAccount(user, userId, roles, password, signupRequest));
+            transactionTemplate.executeWithoutResult(transactionStatus -> {accountRepository.save(accountToSave);});
         } catch (Exception saveEx) {
-            if (userId != null) {
+            if (user.getUserId() != null) {
                 try {
-                    userClient.deleteUser(userId);
+                    userClient.deleteUser(user.getUserId());
                 } catch (Exception roleBackEx) {
                     throw new IllegalStateException
-                            ("Не удалось удалить пользователя с id " + userId + ". Обратитесь к администратору", roleBackEx);
+                            ("Не удалось удалить пользователя с id " + user.getUserId() +
+                                    ". Обратитесь к администратору", roleBackEx);
                 }
             }
             throw saveEx;
@@ -124,19 +123,20 @@ public class AccountService {
     }
 
     @Transactional
-    public void updatePass(String email, UpdatePasswordDTO updatePasswordDTO) {
+    public void updatePass(String email, UpdatePasswordDTO updatePasswordDTO) throws BadRequestException {
         Account account = accountRepository.findByEmail(email).orElseThrow(()
                 -> new NotFoundException("Аккаунт с email " + email + " не найден"));
 
         if (!passwordEncoder.matches(updatePasswordDTO.getPassword(), account.getPassword())) {
-            throw new RuntimeException("Вы ввели неверный пароль");
+            throw new BadRequestException("Вы ввели неверный пароль");
         }
         String password = passwordEncoder.encode(updatePasswordDTO.getNewPassword());
-        accountRepository.save(accountMapper.toAccount(password, account));
+        account.setPassword(password);
+        accountRepository.save(account);
     }
 
     @Transactional
-    public void updateRole(Long accountId, UpdateAccountRoleDTO updateAccountRoleDTO){
+    public void updateRole(Long accountId, UpdateAccountRoleDTO updateAccountRoleDTO) {
         Account account = accountRepository.findById(accountId).orElseThrow(
                 () -> new NotFoundException("Аккаунт с id " + accountId + " не найден"));
 
@@ -151,27 +151,24 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountInfoDTO updateEmail(String email, UpdateEmailDTO updateEmailDTO){
+    public AccountInfoDTO updateEmail(String email, UpdateEmailDTO updateEmailDTO) {
         Account account = accountRepository.findByEmail(email).orElseThrow(
                 () -> new NotFoundException("Аккаунт с email " + email + " не найден"));
 
         account.setEmail(updateEmailDTO.getEmail());
         accountRepository.save(account);
-
-        User user = userRepository.findById(account.getUser().getUserId()).orElseThrow(
-                () -> new NotFoundException("Пользователь с id " + account.getUser().getUserId() + " не найден"));
-        return accountMapper.toAccountInfoDTO(account, user);
+        return accountMapper.toAccountInfoDTO(account);
     }
 
     @Transactional(readOnly = true)
-    public List<AccountInfoDTO> getAll(){
-        return accountRepository.findAll().stream().map(account -> accountMapper.toAccountInfoDTO(account, account.getUser())).toList();
+    public List<AccountInfoDTO> getAll() {
+        return accountRepository.findAll().stream().map(accountMapper::toAccountInfoDTO).toList();
     }
 
     @Transactional
-    public void deleteAccount(Long userId){
-        Account account = accountRepository.findByUserId(userId).orElseThrow(
-                () -> new NotFoundException ("Аккаунт с пользователем " + userId + " не найден"));
+    public void deleteAccount(Long userId) {
+        Account account = accountRepository.findByUserUserId(userId).orElseThrow(
+                () -> new NotFoundException("Аккаунт с пользователем " + userId + " не найден"));
         accountRepository.delete(account);
     }
 }

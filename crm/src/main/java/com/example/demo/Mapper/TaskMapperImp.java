@@ -26,26 +26,4 @@ public class TaskMapperImp implements TaskMapper {
             return taskResponseDTO;
     }
 
-    public Task toTask(TaskCreateDTO taskCreateDTO, Client client, User authorAndAssignee){
-        Task task = new Task();
-        task.setTitle(taskCreateDTO.getTitle());
-        task.setDescription(taskCreateDTO.getDescription());
-        task.setClient(client);
-        task.setTaskStatus(TaskStatus.NEW);
-        task.setCreatedAt(LocalDateTime.now());
-        task.setAuthor(authorAndAssignee);
-        task.setAssignee(authorAndAssignee);
-        return task;
-    }
-
-    public Task toTask(TaskUpdateDTO taskUpdateDTO, Task task){
-        Task toTaskFromTaskUpdate = new Task();
-        toTaskFromTaskUpdate.setId(task.getId());
-        toTaskFromTaskUpdate.setTaskStatus(task.getTaskStatus());
-        toTaskFromTaskUpdate.setCreatedAt(task.getCreatedAt());
-        toTaskFromTaskUpdate.setClient(task.getClient());
-        toTaskFromTaskUpdate.setTitle(taskUpdateDTO.getTitle());
-        toTaskFromTaskUpdate.setDescription(taskUpdateDTO.getDescription());
-        return toTaskFromTaskUpdate;
-    }
 }

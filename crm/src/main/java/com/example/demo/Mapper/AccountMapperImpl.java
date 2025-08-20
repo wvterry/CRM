@@ -13,27 +13,10 @@ import java.util.Set;
 public class AccountMapperImpl implements AccountMapper{
 
     @Override
-    public Account toAccount(User user, Long userId, Set roles, String password, SignupRequest signupRequest) {
-        Account account = new Account();
-        account.setEmail(signupRequest.getEmail());
-        account.setPassword(password);
-        account.setRoles(roles);
-        account.setCreatedAt(LocalDateTime.now());
-        account.setUser(user);
-        return account;
-    }
-
-    @Override
-    public Account toAccount(String password, Account account) {
-        account.setPassword(password);
-        return account;
-    }
-
-    @Override
-    public AccountInfoDTO toAccountInfoDTO(Account account, User user) {
+    public AccountInfoDTO toAccountInfoDTO(Account account) {
         AccountInfoDTO accountInfoDTO = new AccountInfoDTO();
-        accountInfoDTO.setUserFirstName(user.getFirstName());
-        accountInfoDTO.setUserLastName(user.getLastName());
+        accountInfoDTO.setUserFirstName(account.getUser().getFirstName());
+        accountInfoDTO.setUserLastName(account.getUser().getLastName());
         accountInfoDTO.setAccountId(account.getAccountId());
         accountInfoDTO.setEmail(account.getEmail());
         return accountInfoDTO;
