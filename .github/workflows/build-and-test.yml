@@ -26,5 +26,11 @@ jobs:
       - name: Build User Service
         run: mvn -B clean package -pl user-service -am -DskipTests
 
+      - name: Build Kafka Admin Service
+        run: mvn -B clean package -pl kafka-admin-service -am -DskipTests
+
+      - name: Build Security Common
+        run: mvn -B clean package -pl security-common -am -DskipTests
+
       - name: Run tests
         run: mvn test
