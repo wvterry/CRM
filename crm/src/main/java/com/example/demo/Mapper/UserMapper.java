@@ -7,8 +7,8 @@ import com.example.demo.Model.User;
 
 public interface UserMapper {
 
-    public UserInfoDTO toUserInfoDTO(User user);
+    UserInfoDTO toUserInfoDTO(User user);
 
-    public CreateUserRequestDTO toCreateUserRequestDTO(SignupRequest signupRequest);
+    CreateUserRequestDTO toCreateUserRequestDTO(SignupRequest signupRequest);
 
 }

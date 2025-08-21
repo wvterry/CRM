@@ -7,10 +7,10 @@ import com.example.userservice.Model.User;
 
 public interface UserMapper {
 
-    public UserInfoDTO toUserInfoDTO(User user);
+    UserInfoDTO toUserInfoDTO(User user);
 
-    public User toUser(CreateUserDTO createUserDTO);
+    User toUser(CreateUserDTO createUserDTO);
 
-    public UserIdResponseDTO toUserIdResponseDTO(User user);
+    UserIdResponseDTO toUserIdResponseDTO(User user);
 
 }

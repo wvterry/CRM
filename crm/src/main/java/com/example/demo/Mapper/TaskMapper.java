@@ -5,6 +5,6 @@ import com.example.demo.Model.Task;
 
 public interface TaskMapper {
 
-    public TaskResponseDTO toTaskResponseDTO(Task task);
+    TaskResponseDTO toTaskResponseDTO(Task task);
 
 }

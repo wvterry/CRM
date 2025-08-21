@@ -249,7 +249,7 @@ public class TaskServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(result, TASK_RESPONSE_DTO_1);
-        verify(taskRepository).findById(TASK_ID_1);;
+        verify(taskRepository).findById(TASK_ID_1);
         verify(taskMapper).toTaskResponseDTO(TASK_1);
     }
 

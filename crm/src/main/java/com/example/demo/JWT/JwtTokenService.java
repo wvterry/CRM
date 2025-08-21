@@ -6,8 +6,6 @@ import com.example.demo.Repository.AccountRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
@@ -23,8 +21,8 @@ import java.util.stream.Collectors;
 public class JwtTokenService {
 
     private final int expiration;
-    private SecretKey key;
-    private AccountRepository accountRepository;
+    private final SecretKey key;
+    private final AccountRepository accountRepository;
 
     @Autowired
     public JwtTokenService(@Value("${jwt.secret}") String jwtSecret,
@@ -34,8 +32,6 @@ public class JwtTokenService {
         this.expiration = expiration;
         this.accountRepository = accountRepository;
     }
-
-    private final static Logger logger = LoggerFactory.getLogger(JwtTokenService.class);
 
     public String generateToken(String email, Collection<? extends GrantedAuthority> authorities){
         Account account = accountRepository.findByEmail(email).orElseThrow(
