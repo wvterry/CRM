@@ -8,7 +8,7 @@
 		<groupId>com.example</groupId>
 		<artifactId>crm-parent</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath> <!-- путь к родителю -->
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>crm</artifactId>
