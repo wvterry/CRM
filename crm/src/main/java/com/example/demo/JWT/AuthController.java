@@ -3,6 +3,7 @@ package com.example.demo.JWT;
 import com.example.demo.DTO.UpdateAccountRoleDTO;
 import com.example.demo.DTO.UpdatePasswordDTO;
 import com.example.demo.Service.AccountService;
+import com.example.securitycommon.jwt.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;

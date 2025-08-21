@@ -5,10 +5,12 @@ WORKDIR /app
 COPY pom.xml .
 COPY crm/pom.xml ./crm/
 COPY user-service/pom.xml ./user-service/
+COPY security-common/pom.xml ./security-common/
+COPY . .
 
 RUN mvn dependency:go-offline -B
 
-COPY . .
+#COPY . .
 
 RUN mvn package -pl user-service -am -DskipTests
 

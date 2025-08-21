@@ -16,9 +16,10 @@
 
     <!-- Модули (подпроекты) -->
     <modules>
-        <module>crm</module>
+         <module>crm</module>
          <module>user-service</module>
-        <!-- Сюда будешь добавлять новые микросервисы -->
+         <module>security-common</module>
+         <module>kafka-admin-service</module>
     </modules>
 
     <!-- Общие свойства -->

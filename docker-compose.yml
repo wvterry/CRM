@@ -65,6 +65,16 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_CLUSTERS_0_ZOOKEEPER_CONNECT: zookeeper:2181
 
+  kafka-admin-service:
+      build:
+        context: .
+        dockerfile: kafka-admin-service/Dockerfile
+      container_name: kafka-admin-service
+      depends_on:
+        - kafka
+      environment:
+        SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
   crm-app:
     build:
       context: .

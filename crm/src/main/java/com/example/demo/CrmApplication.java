@@ -5,8 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.retry.annotation.EnableRetry;
 
-@SpringBootApplication
-@EnableFeignClients
+@SpringBootApplication(scanBasePackages = {"com.example.demo", "com.example.securitycommon"})
+@EnableFeignClients(basePackages = "com.example.demo.Feign")
 @EnableRetry
 public class CrmApplication {
 

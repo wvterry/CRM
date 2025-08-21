@@ -4,8 +4,7 @@ import com.example.demo.DTO.*;
 import com.example.demo.Exception.NotFoundException;
 import com.example.demo.Feign.UserClient;
 import com.example.demo.JWT.AuthRequest;
-import com.example.demo.JWT.CustomUserDetailsService;
-import com.example.demo.JWT.JwtUtil;
+import com.example.demo.JWT.JwtTokenService;
 import com.example.demo.JWT.SignupRequest;
 import com.example.demo.Mapper.AccountMapper;
 import com.example.demo.Mapper.UserMapper;
@@ -15,7 +14,6 @@ import com.example.demo.Model.User;
 import com.example.demo.Repository.AccountRepository;
 import com.example.demo.Repository.RoleRepository;
 import com.example.demo.Repository.UserRepository;
-import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +43,7 @@ public class AccountService {
     private final RoleRepository roleRepository;
     private final AccountMapper accountMapper;
     private final AuthenticationManager authenticationManager;
-    private final JwtUtil jwtUtil;
+    private final JwtTokenService jwtUtil;
     private final UserService userService;
     private final TransactionTemplate transactionTemplate;
 
@@ -58,7 +56,7 @@ public class AccountService {
                           RoleRepository roleRepository,
                           AccountMapper accountMapper,
                           AuthenticationManager authenticationManager,
-                          JwtUtil jwtUtil,
+                          JwtTokenService jwtUtil,
                           UserService userService,
                           TransactionTemplate transactionTemplate) {
         this.accountRepository = accountRepository;

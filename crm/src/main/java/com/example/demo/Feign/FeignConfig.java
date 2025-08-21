@@ -18,7 +18,7 @@ public class FeignConfig {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    @Value("${internal.api.key}")
+    @Value("${security.internal.api.key}")
     private String apiKey;
 
     private SecretKey key;

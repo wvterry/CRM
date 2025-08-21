@@ -1,8 +1,9 @@
 package com.example.demo.Controller;
 
 import com.example.demo.DTO.*;
-import com.example.demo.JWT.JwtUtil;
+import com.example.demo.JWT.JwtTokenService;
 import com.example.demo.Service.TaskService;
+import com.example.securitycommon.jwt.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
