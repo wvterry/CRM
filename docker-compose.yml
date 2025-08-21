@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:latest
@@ -12,18 +10,7 @@ services:
       - "5444:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  postgres-user-service:
-    image: postgres:latest
-    container_name: postgres-user-service
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: mypass
-      POSTGRES_DB: uservice
-    ports:
-      - "5445:5432"
-    volumes:
-      - postgres_user_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.1
@@ -66,14 +53,14 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER_CONNECT: zookeeper:2181
 
   kafka-admin-service:
-      build:
-        context: .
-        dockerfile: kafka-admin-service/Dockerfile
-      container_name: kafka-admin-service
-      depends_on:
-        - kafka
-      environment:
-        SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    build:
+      context: .
+      dockerfile: kafka-admin-service/Dockerfile
+    container_name: kafka-admin-service
+    depends_on:
+      - kafka
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   crm-app:
     build:
@@ -100,10 +87,10 @@ services:
     ports:
       - "8083:8080"
     depends_on:
-      - postgres-user-service
+      - postgres
       - kafka
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user-service:5432/uservice
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/uservice
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: mypass
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
@@ -111,7 +98,6 @@ services:
 
 volumes:
   postgres_data:
-  postgres_user_data:
 
 networks:
   default:

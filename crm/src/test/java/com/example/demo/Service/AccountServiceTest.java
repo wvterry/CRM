@@ -13,8 +13,6 @@ import com.example.demo.Model.Role;
 import com.example.demo.Repository.AccountRepository;
 import com.example.demo.Repository.RoleRepository;
 import com.example.demo.Repository.UserRepository;
-import feign.FeignException;
-import feign.Request;
 import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +29,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
 
@@ -81,8 +80,10 @@ public class AccountServiceTest {
     private final static CreateUserRequestDTO CREATE_USER_REQUEST_DTO = new CreateUserRequestDTO("Egor", "Zhukov");
 
     private final static Account ACCOUNT_1 = new Account(ACCOUNT_ID_1, EMAIL, USER_1, Set.of(USER_ROLE));
-    private final static Account ACCOUNT_2 = new Account(ACCOUNT_ID_2, EMAIL_1, PASSWORD);
+    private final static Account ACCOUNT_2 = new Account(ACCOUNT_ID_2, EMAIL_1, ENCODED_PASSWORD);
 
+    private final static AccountInfoDTO ACCOUNT_INFO_DTO =
+            new AccountInfoDTO(ACCOUNT_ID_1, EMAIL, USER_1.getFirstName(), USER_1.getLastName());
 
 
     @InjectMocks
@@ -111,6 +112,10 @@ public class AccountServiceTest {
     private UserDetails userDetails;
     @Mock
     private Authentication authentication;
+    @Mock
+    private UserService userService;
+    @Mock
+    private TransactionTemplate transactionTemplate;
     @BeforeEach
     void setUp() {
         authRequest = new AuthRequest(EMAIL, PASSWORD);
@@ -145,31 +150,25 @@ public class AccountServiceTest {
         verify(jwtUtil).generateToken(eq(EMAIL), anyCollection());
     }
 
-//    @Test
-//    void register_Successful() throws Exception {
-//        // Arrange
-//        when(accountRepository.existsByEmail(EMAIL)).thenReturn(false);
-//        when(userMapper.toCreateUserRequestDTO(SIGNUP_REQUEST)).thenReturn(CREATE_USER_REQUEST_DTO);
-//        when(userClient.createUser(CREATE_USER_REQUEST_DTO)).thenReturn(USER_ID_RESPONSE_DTO);
-//        when(userMapper.toUser(USER_ID_1, SIGNUP_REQUEST)).thenReturn(USER_1);
-//        when(userRepository.save(USER_1)).thenReturn(USER_1);
-//        when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
-//        when(roleRepository.findByName("USER")).thenReturn(Optional.of(USER_ROLE));
-//
-//        Account expectedAccount = new Account();
-//
-//        when(accountRepository.save(expectedAccount)).thenReturn(expectedAccount);
-//
-//        // Act
-//        accountService.register(SIGNUP_REQUEST);
-//
-//        // Assert
-//        verify(accountRepository).existsByEmail(EMAIL);
-//        verify(userClient).createUser(CREATE_USER_REQUEST_DTO);
-//        verify(userRepository).save(USER_1);
-//        verify(roleRepository).findByName("USER");
-//        verify(accountRepository).save(expectedAccount);
-//    }
+    @Test
+    void register_Success() throws BadRequestException {
+        // Arrange
+        when(accountRepository.existsByEmail(EMAIL)).thenReturn(false);
+        when(userService.saveUser(SIGNUP_REQUEST)).thenReturn(USER_1);
+        when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(roleRepository.findByName("USER")).thenReturn(Optional.of(USER_ROLE));
+        doNothing().when(transactionTemplate).executeWithoutResult(any());
+
+        // Act
+        assertDoesNotThrow(() -> accountService.register(SIGNUP_REQUEST));
+
+        // Assert
+        verify(accountRepository).existsByEmail(EMAIL);
+        verify(userService).saveUser(SIGNUP_REQUEST);
+        verify(passwordEncoder).encode(PASSWORD);
+        verify(roleRepository).findByName("USER");
+        verify(transactionTemplate).executeWithoutResult(any());
+    }
 
     @Test
     void register_Exception_EmailAlreadyExist(){
@@ -181,102 +180,105 @@ public class AccountServiceTest {
         verify(accountRepository).existsByEmail(EMAIL);
     }
 
-//    @Test
-//    void register_Exception_UserClientThrowsConflict(){
-//        // Arrange
-//        when(accountRepository.existsByEmail(EMAIL)).thenReturn(false);
-//        when(userMapper.toCreateUserRequestDTO(SIGNUP_REQUEST)).thenReturn(CREATE_USER_REQUEST_DTO);
-//        when(userClient.createUser(CREATE_USER_REQUEST_DTO)).thenThrow(new
-//                FeignException.Conflict("Conflict", mock(Request.class), null, null));
-//
-//        // Act
-//        BadRequestException exception = assertThrows(BadRequestException.class,
-//                () -> accountService.register(SIGNUP_REQUEST));
-//        assertEquals("Пользователь с email " + EMAIL + " уже зарегистрирован", exception.getMessage());
-//
-//        // Assert
-//        verify(accountRepository).existsByEmail(EMAIL);
-//        verify(userClient).createUser(CREATE_USER_REQUEST_DTO);
-//        verify(userMapper).toCreateUserRequestDTO(SIGNUP_REQUEST);
-//        verifyNoMoreInteractions(accountRepository);
-//        verifyNoInteractions(userRepository, roleRepository, accountMapper);
-//    }
+    @Test
+    void register_Exception_UserClientThrowsConflict() throws BadRequestException {
+        // Arrange
+        when(accountRepository.existsByEmail(EMAIL)).thenReturn(false);
+        when(userMapper.toCreateUserRequestDTO(SIGNUP_REQUEST)).thenReturn(CREATE_USER_REQUEST_DTO);
+        when(userService.saveUser(SIGNUP_REQUEST)).thenThrow(
+                new BadRequestException("Пользователь с email " + EMAIL + " уже зарегистрирован")
+        );
 
-//    @Test
-//    void register_Exception_RoleNotFound() throws BadRequestException {
-//        // Arrange
-//        when(accountRepository.existsByEmail(EMAIL)).thenReturn(false);
-//        when(userMapper.toCreateUserRequestDTO(SIGNUP_REQUEST)).thenReturn(CREATE_USER_REQUEST_DTO);
-//        when(userClient.createUser(CREATE_USER_REQUEST_DTO)).thenReturn(USER_ID_RESPONSE_DTO);
-//        when(userMapper.toUser(USER_ID_1, SIGNUP_REQUEST)).thenReturn(USER_1);
-//        when(userRepository.save(USER_1)).thenReturn(USER_1);
-//        when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
-//        when(roleRepository.findByName("USER")).thenReturn(Optional.empty());
-//
-//        //Assert
-//        assertThrows(NotFoundException.class, () -> accountService.register(SIGNUP_REQUEST));
-//        verify(accountRepository).existsByEmail(EMAIL);
-//        verify(userClient).createUser(CREATE_USER_REQUEST_DTO);
-//        verify(userRepository).save(USER_1);
-//        verify(roleRepository).findByName("USER");
-//    }
+        // Act
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> accountService.register(SIGNUP_REQUEST));
+        assertEquals("Пользователь с email " + EMAIL + " уже зарегистрирован", exception.getMessage());
 
-//    @Test
-//    void register_Exception_AccountSaveFails_RollsBackUserCreation(){
-//        when(accountRepository.existsByEmail(EMAIL)).thenReturn(false);
-//        when(userMapper.toCreateUserRequestDTO(SIGNUP_REQUEST)).thenReturn(CREATE_USER_REQUEST_DTO);
-//        when(userClient.createUser(CREATE_USER_REQUEST_DTO)).thenReturn(USER_ID_RESPONSE_DTO);
-//        when(userMapper.toUser(USER_ID_1, SIGNUP_REQUEST)).thenReturn(USER_1);
-//        when(userRepository.save(USER_1)).thenReturn(USER_1);
-//        when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
-//        when(roleRepository.findByName("USER")).thenReturn(Optional.of(USER_ROLE));
-//        when(accountRepository.save(ACCOUNT_1)).thenThrow(new RuntimeException("saveEx"));
-//
-//        //Assert
-//        assertThrows(RuntimeException.class, () -> accountService.register(SIGNUP_REQUEST));
-//        verify(userClient).deleteUser(USER_ID_1);
-//        verify(accountRepository).existsByEmail(EMAIL);
-//        verify(userClient).createUser(CREATE_USER_REQUEST_DTO);
-//        verify(userRepository).save(USER_1);
-//        verify(roleRepository).findByName("USER");
-//        verify(accountRepository).save(ACCOUNT_1);
-//        verifyNoMoreInteractions(accountRepository);
-//    }
-
-//    @Test
-//    void register_Exception_AccountSaveFails_RollsBackException() {
-//        // Arrange
-//        when(accountRepository.existsByEmail(EMAIL)).thenReturn(false);
-//        when(userMapper.toCreateUserRequestDTO(SIGNUP_REQUEST)).thenReturn(CREATE_USER_REQUEST_DTO);
-//        when(userClient.createUser(CREATE_USER_REQUEST_DTO)).thenReturn(USER_ID_RESPONSE_DTO);
-//        when(userMapper.toUser(USER_ID_1, SIGNUP_REQUEST)).thenReturn(USER_1);
-//        when(userRepository.save(USER_1)).thenReturn(USER_1);
-//        when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
-//        when(roleRepository.findByName("USER")).thenReturn(Optional.of(USER_ROLE));
-//
-//        Account expectedAccount = new Account();
-//
-//        when(accountRepository.save(expectedAccount)).thenThrow(new RuntimeException("DB save error"));
-//        doThrow(new RuntimeException("Rollback failed")).when(userClient).deleteUser(USER_ID_1);
-//        IllegalStateException exception = assertThrows(IllegalStateException.class,
-//                () -> accountService.register(SIGNUP_REQUEST));
-//
-//        //Assert
-//        assertEquals("Не удалось удалить пользователя с id " + USER_ID_1 + ". Обратитесь к администратору",
-//                exception.getMessage());
-//        assertNotNull(exception.getCause());
-//        assertEquals("Rollback failed", exception.getCause().getMessage());
-//        verify(accountRepository).existsByEmail(EMAIL);
-//        verify(userClient).createUser(CREATE_USER_REQUEST_DTO);
-//        verify(userRepository).save(USER_1);
-//        verify(roleRepository).findByName("USER");
-//        verify(accountRepository).save(expectedAccount);
-//        verify(userClient).deleteUser(USER_ID_1);
-//        verifyNoMoreInteractions(accountRepository, userRepository, roleRepository);
-//    }
+        // Assert
+        verify(accountRepository).existsByEmail(EMAIL);
+        verify(userService).saveUser(SIGNUP_REQUEST);
+        verifyNoMoreInteractions(accountRepository);
+        verifyNoInteractions(passwordEncoder, roleRepository, accountMapper, transactionTemplate);
+    }
 
     @Test
-    void updatePass() throws BadRequestException{
+    void register_Exception_RoleNotFound() throws BadRequestException {
+        // Arrange
+        when(accountRepository.existsByEmail(EMAIL)).thenReturn(false);
+        when(userService.saveUser(SIGNUP_REQUEST)).thenReturn(USER_1);
+        when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(roleRepository.findByName("USER")).thenReturn(Optional.empty());
+
+        // Act
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> accountService.register(SIGNUP_REQUEST));
+        // Assert
+        assertEquals("Роль отсутствует", exception.getMessage());
+        verify(accountRepository).existsByEmail(EMAIL);
+        verify(userService).saveUser(SIGNUP_REQUEST);
+        verify(passwordEncoder).encode(PASSWORD);
+        verify(roleRepository).findByName("USER");
+        verifyNoInteractions(userClient, userRepository, transactionTemplate);
+    }
+
+    @Test
+    void register_Exception_AccountSaveFails_RollsBackUserCreation() throws BadRequestException {
+        // Arrange
+        when(accountRepository.existsByEmail(EMAIL)).thenReturn(false);
+        when(userService.saveUser(SIGNUP_REQUEST)).thenReturn(USER_1);
+        when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(roleRepository.findByName("USER")).thenReturn(Optional.of(USER_ROLE));
+        doThrow(new RuntimeException("saveEx"))
+                .when(transactionTemplate).executeWithoutResult(any());
+        doNothing().when(userClient).deleteUser(USER_ID_1);
+
+        // Act
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> accountService.register(SIGNUP_REQUEST));
+
+        // Assert
+        assertEquals("saveEx", exception.getMessage());
+        verify(accountRepository).existsByEmail(EMAIL);
+        verify(userService).saveUser(SIGNUP_REQUEST);
+        verify(passwordEncoder).encode(PASSWORD);
+        verify(roleRepository).findByName("USER");
+        verify(transactionTemplate).executeWithoutResult(any());
+        verify(userClient).deleteUser(USER_ID_1);
+        verify(accountRepository, never()).save(any());
+    }
+
+    @Test
+    void register_Exception_AccountSaveFails_RollsBackException() throws BadRequestException {
+        // Arrange
+        when(accountRepository.existsByEmail(EMAIL)).thenReturn(false);
+        when(userService.saveUser(SIGNUP_REQUEST)).thenReturn(USER_1);
+        when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(roleRepository.findByName("USER")).thenReturn(Optional.of(USER_ROLE));
+        doThrow(new RuntimeException("DB save error"))
+                .when(transactionTemplate).executeWithoutResult(any());
+        doThrow(new RuntimeException("Rollback failed"))
+                .when(userClient).deleteUser(USER_ID_1);
+
+        // Act
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> accountService.register(SIGNUP_REQUEST));
+
+        // Assert
+        assertEquals("Не удалось удалить пользователя с id " + USER_ID_1 + ". Обратитесь к администратору",
+                exception.getMessage());
+        assertNotNull(exception.getCause());
+        assertEquals("Rollback failed", exception.getCause().getMessage());
+        verify(accountRepository).existsByEmail(EMAIL);
+        verify(userService).saveUser(SIGNUP_REQUEST);
+        verify(passwordEncoder).encode(PASSWORD);
+        verify(roleRepository).findByName("USER");
+        verify(transactionTemplate).executeWithoutResult(any());
+        verify(userClient).deleteUser(USER_ID_1);
+        verify(accountRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePass() throws BadRequestException {
         // Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_2));
         when(passwordEncoder.matches(UPDATE_PASSWORD_DTO_1.getPassword(), ACCOUNT_2.getPassword())).thenReturn(true);
@@ -285,10 +287,11 @@ public class AccountServiceTest {
         // Act
         accountService.updatePass(EMAIL_1, UPDATE_PASSWORD_DTO_1);
 
-        //Assert
+        // Assert
         verify(accountRepository).findByEmail(EMAIL_1);
-        verify(passwordEncoder).matches(ACCOUNT_2.getPassword(), UPDATE_PASSWORD_DTO_1.getPassword());
+        verify(passwordEncoder).matches(UPDATE_PASSWORD_DTO_1.getPassword(), ACCOUNT_2.getPassword());
         verify(passwordEncoder).encode(UPDATE_PASSWORD_DTO_1.getNewPassword());
+        verify(accountRepository).save(any(Account.class));
     }
 
     @Test
@@ -301,16 +304,16 @@ public class AccountServiceTest {
         verify(accountRepository).findByEmail(EMAIL_1);
     }
 
-//    @Test
-//    void updatePass_IncorrectPass(){
-//        // Arrange
-//        when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_2));
-//        when(passwordEncoder.matches(UPDATE_PASSWORD_DTO_1.getPassword(), ACCOUNT_2.getPassword())).thenReturn(false);
-//
-//        //Assert
-//        assertThrows(RuntimeException.class, ()-> accountService.updatePass(EMAIL_1, UPDATE_PASSWORD_DTO_1));
-//        verify(accountRepository).findByEmail(EMAIL_1);
-//    }
+    @Test
+    void updatePass_IncorrectPass(){
+        // Arrange
+        when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_2));
+        when(passwordEncoder.matches(UPDATE_PASSWORD_DTO_1.getPassword(), ACCOUNT_2.getPassword())).thenReturn(false);
+
+        //Assert
+        assertThrows(BadRequestException.class, ()-> accountService.updatePass(EMAIL_1, UPDATE_PASSWORD_DTO_1));
+        verify(accountRepository).findByEmail(EMAIL_1);
+    }
 
     @Test
     void updateRoleTest(){
@@ -352,19 +355,19 @@ public class AccountServiceTest {
     }
 
     @Test
-    void updateEmail(){
+    void updateEmail() {
         // Arrange
         when(accountRepository.findByEmail(EMAIL)).thenReturn(Optional.of(ACCOUNT_1));
-        when(userRepository.findById(ACCOUNT_1.getUser().getUserId())).thenReturn(Optional.of(USER_1));
+        when(accountMapper.toAccountInfoDTO(ACCOUNT_1)).thenReturn(new AccountInfoDTO());
 
-        //Act
-        accountService.updateEmail(EMAIL, UPDATE_EMAIL_DTO);
+        // Act
+        AccountInfoDTO result = accountService.updateEmail(EMAIL, UPDATE_EMAIL_DTO);
 
-        //Assert
+        // Assert
         verify(accountRepository).findByEmail(EMAIL);
-        verify(userRepository).findById(ACCOUNT_1.getUser().getUserId());
         assertEquals(EMAIL_1, ACCOUNT_1.getEmail());
         verify(accountRepository).save(ACCOUNT_1);
+        verify(accountMapper).toAccountInfoDTO(ACCOUNT_1);
     }
 
     @Test
@@ -378,14 +381,66 @@ public class AccountServiceTest {
     }
 
     @Test
-    void updateEmail_UserNotFound(){
-        //Arrange
-        when(accountRepository.findByEmail(EMAIL)).thenReturn(Optional.of(ACCOUNT_1));
-        when(userRepository.findById(ACCOUNT_1.getUser().getUserId())).thenReturn(Optional.empty());
+    void getAllTest(){
+        // Arrange
+        when(accountRepository.findAll()).thenReturn(List.of(ACCOUNT_1));
+        when(accountMapper.toAccountInfoDTO(ACCOUNT_1)).thenReturn(ACCOUNT_INFO_DTO);
+
+        // Act
+        List<AccountInfoDTO> result = accountService.getAll();
 
         //Assert
-        assertThrows(NotFoundException.class, ()-> accountService.updateEmail(EMAIL, UPDATE_EMAIL_DTO));
-        verify(accountRepository).findByEmail(EMAIL);
+        assertEquals(result, List.of(ACCOUNT_INFO_DTO));
+        verify(accountRepository).findAll();
+        verify(accountMapper).toAccountInfoDTO(ACCOUNT_1);
     }
+
+    @Test
+    void deleteAccountTest(){
+        // Arrange
+        when(accountRepository.findByUserUserId(USER_ID_1)).thenReturn(Optional.of(ACCOUNT_1));
+
+        // Act
+        accountService.deleteAccount(USER_ID_1);
+
+        //Assert
+        verify(accountRepository).findByUserUserId(USER_ID_1);
+    }
+
+    @Test
+    void deleteAccountTest_AccountNotFound(){
+        // Arrange
+        when(accountRepository.findByUserUserId(USER_ID_1)).thenReturn(Optional.empty());
+
+        //Assert
+        assertThrows(NotFoundException.class, () -> accountService.deleteAccount(USER_ID_1));
+        verify(accountRepository).findByUserUserId(USER_ID_1);
+    }
+
+    @Test
+    void getByIdTest(){
+        // Arrange
+        when(accountRepository.findById(ACCOUNT_ID_1)).thenReturn(Optional.of(ACCOUNT_1));
+        when(accountMapper.toAccountInfoDTO(ACCOUNT_1)).thenReturn(ACCOUNT_INFO_DTO);
+
+        // Act
+        AccountInfoDTO result = accountService.getById(ACCOUNT_ID_1);
+
+        //Assert
+        assertEquals(result, ACCOUNT_INFO_DTO);
+        verify(accountRepository).findById(ACCOUNT_ID_1);
+        verify(accountMapper).toAccountInfoDTO(ACCOUNT_1);
+    }
+
+    @Test
+    void getByIdTest_AccountNotFound() {
+        // Arrange
+        when(accountRepository.findById(ACCOUNT_ID_1)).thenReturn(Optional.empty());
+
+        // Assert
+        assertThrows(NotFoundException.class, () -> accountService.getById(ACCOUNT_ID_1));
+        verify(accountRepository).findById(ACCOUNT_ID_1);
+    }
+
 
 }

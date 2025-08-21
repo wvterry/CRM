@@ -1,7 +1,6 @@
 package com.example.userservice.Mapper;
 
 import com.example.userservice.DTO.CreateUserDTO;
-import com.example.userservice.DTO.UpdateUserDTO;
 import com.example.userservice.DTO.UserIdResponseDTO;
 import com.example.userservice.DTO.UserInfoDTO;
 import com.example.userservice.Model.User;

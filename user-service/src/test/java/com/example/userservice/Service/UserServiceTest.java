@@ -4,6 +4,7 @@ import com.example.userservice.DTO.CreateUserDTO;
 import com.example.userservice.DTO.UpdateUserDTO;
 import com.example.userservice.DTO.UserIdResponseDTO;
 import com.example.userservice.DTO.UserInfoDTO;
+import com.example.userservice.Event.DeleteUserEvent;
 import com.example.userservice.Event.UpdateUserEvent;
 import com.example.userservice.Exception.NotFoundException;
 import com.example.userservice.Mapper.UserMapper;
@@ -17,13 +18,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -40,6 +41,9 @@ public class UserServiceTest {
 
     @Mock
     private KafkaTemplate<String, Object> kafkaTemplate;
+
+    @Mock
+    private TransactionTemplate transactionTemplate;
 
     private final static Long ID1 = 1L;
     private final static User USER1 = new User(1L, "Ivan", "Ivanov");
@@ -73,26 +77,43 @@ public class UserServiceTest {
     }
 
     @Test
-    void deleteUserTest_Exception(){
-        //Arrange
+    void deleteUserTest_Exception() {
+        // Arrange
         when(userRepository.findById(ID1)).thenReturn(Optional.empty());
+        doAnswer(invocation -> {
+            User user = userRepository.findById(ID1).orElseThrow(
+                    () -> new NotFoundException("Пользователь с id " + ID1 + " не найден"));
+            userRepository.delete(user);
+            return null;
+        }).when(transactionTemplate).executeWithoutResult(any());
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> userService.deleteUser(ID1));
 
-        //Assert
-        assertThrows(NotFoundException.class, () -> userService.deleteUser(ID1));
+        // Assert
+        assertEquals("Пользователь с id " + ID1 + " не найден", exception.getMessage());
         verify(userRepository).findById(ID1);
+        verify(transactionTemplate).executeWithoutResult(any());
+        verify(kafkaTemplate, never()).send(any(), any(), any());
     }
 
     @Test
     void deleteUserTest(){
-        //Arrange
+        // Arrange
         when(userRepository.findById(ID1)).thenReturn(Optional.of(USER1));
+        doAnswer(invocation -> {
+            User user = userRepository.findById(ID1).orElseThrow();
+            userRepository.delete(user);
+            return null;
+        }).when(transactionTemplate).executeWithoutResult(any());
 
-        //Act
+        // Act
         userService.deleteUser(ID1);
 
-        //Assert
+        // Assert
         verify(userRepository).findById(ID1);
         verify(userRepository).delete(USER1);
+        verify(transactionTemplate).executeWithoutResult(any());
+        verify(kafkaTemplate).send(eq("user_deleted"), eq(ID1.toString()), any(DeleteUserEvent.class));
     }
 
     @Test
@@ -112,35 +133,88 @@ public class UserServiceTest {
         verify(userRepository).save(USER1);
     }
 
-//    @Test
-//    void updateUser(){
-//        //Arrange
-//        when(userRepository.findById(ID1)).thenReturn(Optional.of(USER1));
-//        when(userMapper.toUser(USER1, UPDATE_USER_DTO_1)).thenReturn(USER1);
-//        when(userRepository.save(USER1)).thenReturn(USER1);
-//        when(userMapper.toUserInfoDTO(USER1)).thenReturn(USER_INFO_DTO1);
-//
-//        //Act
-//        UserInfoDTO result = userService.updateUser(ID1, UPDATE_USER_DTO_1);
-//
-//        //Assert
-//        assertNotNull(result);
-//        assertEquals(result, USER_INFO_DTO1);
-//        verify(userRepository).findById(ID1);
-//        verify(userMapper).toUser(USER1, UPDATE_USER_DTO_1);
-//        verify(userRepository).save(USER1);
-//        verify(userMapper).toUserInfoDTO(USER1);
-//        verify(kafkaTemplate).send("user_updated", ID1.toString(),
-//                new UpdateUserEvent("UPDATE_USER", ID1, UPDATE_USER_DTO_1));
-//    }
+    @Test
+    void updateUser(){
+        //Arrange
+        when(userRepository.findById(ID1)).thenReturn(Optional.of(USER1));
+        when(userRepository.save(USER1)).thenReturn(USER1);
+        when(userMapper.toUserInfoDTO(USER1)).thenReturn(USER_INFO_DTO1);
+        when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
+            User user = userRepository.findById(ID1).orElseThrow();
+            user.setFirstName(UPDATE_USER_DTO_1.getFirstName());
+            user.setLastName(UPDATE_USER_DTO_1.getLastName());
+            userRepository.save(user);
+            return userMapper.toUserInfoDTO(user);
+        });
+
+        //Act
+        UserInfoDTO result = userService.updateUser(ID1, UPDATE_USER_DTO_1);
+
+        //Assert
+        assertNotNull(result);
+        assertEquals(USER_INFO_DTO1, result);
+        verify(userRepository).findById(ID1);
+        verify(userRepository).save(USER1);
+        verify(userMapper).toUserInfoDTO(USER1);
+        verify(transactionTemplate).execute(any());
+        verify(kafkaTemplate).send(eq("user_updated"), eq(ID1.toString()), any(UpdateUserEvent.class));
+    }
 
     @Test
     void updateUser_Exception(){
         //Arrange
         when(userRepository.findById(ID1)).thenReturn(Optional.empty());
+        when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
+            User user = userRepository.findById(ID1).orElseThrow(() ->
+                    new NotFoundException("Пользователь с id " + ID1 + " не найден"));
+            return userMapper.toUserInfoDTO(user);
+        });
+
+        //Act & Assert
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                ()-> userService.updateUser(ID1, UPDATE_USER_DTO_1));
+        assertEquals("Пользователь с id " + ID1 + " не найден", exception.getMessage());
+        verify(userRepository).findById(ID1);
+        verify(transactionTemplate).execute(any());
+    }
+
+    @Test
+    void getAllTest(){
+        //Arrange
+        when(userRepository.findAll()).thenReturn(List.of(USER1));
+        when(userMapper.toUserInfoDTO(USER1)).thenReturn(USER_INFO_DTO1);
+
+        //Act
+        List<UserInfoDTO> result = userService.getAll();
 
         //Assert
-        assertThrows(NotFoundException.class, ()-> userService.updateUser(ID1, UPDATE_USER_DTO_1));
+        assertEquals(result, List.of(USER_INFO_DTO1));
+        verify(userRepository).findAll();
+        verify(userMapper).toUserInfoDTO(USER1);
+    }
+
+    @Test
+    void getByIdTest(){
+        //Arrange
+        when(userRepository.findById(ID1)).thenReturn(Optional.of(USER1));
+        when(userMapper.toUserInfoDTO(USER1)).thenReturn(USER_INFO_DTO1);
+
+        //Act
+        UserInfoDTO result = userService.getById(ID1);
+
+        //Assert
+        assertEquals(result, USER_INFO_DTO1);
+        verify(userRepository).findById(ID1);
+        verify(userMapper).toUserInfoDTO(USER1);
+    }
+
+    @Test
+    void getById_UserNotFound(){
+        //Arrange
+        when(userRepository.findById(ID1)).thenReturn(Optional.empty());
+
+        //Assert
+        assertThrows(NotFoundException.class, () -> userService.getById(ID1));
         verify(userRepository).findById(ID1);
     }
 

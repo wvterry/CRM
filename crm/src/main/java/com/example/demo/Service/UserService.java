@@ -7,7 +7,6 @@ import com.example.demo.Exception.NotFoundException;
 import com.example.demo.Feign.UserClient;
 import com.example.demo.JWT.SignupRequest;
 import com.example.demo.Mapper.UserMapper;
-import com.example.demo.Model.Account;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.UserRepository;
 import feign.FeignException;
@@ -44,11 +43,6 @@ public class UserService {
         user.setLastName(updateUserDTO.getLastName());
         User updatedUser = userRepository.save(user);
         return userMapper.toUserInfoDTO(updatedUser);
-    }
-
-    @Transactional(readOnly = true)
-    public User getUserById(Long userId){
-        return userRepository.findById(userId).orElseThrow(()-> new NotFoundException("Пользователь с ID " + userId + " не найден"));
     }
 
     @Transactional

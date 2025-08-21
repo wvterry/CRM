@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/user/update/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/user/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/user").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/user/**").authenticated()
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(authTokenFilter,

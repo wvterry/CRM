@@ -2,13 +2,12 @@ package com.example.demo.Controller;
 
 import com.example.demo.DTO.AccountInfoDTO;
 import com.example.demo.DTO.UpdateEmailDTO;
-import com.example.demo.JWT.JwtTokenService;
 import com.example.demo.Service.AccountService;
+import com.example.securitycommon.jwt.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.example.securitycommon.jwt.JwtUtil;
 
 import java.util.List;
 
@@ -36,6 +35,11 @@ public class AccountController {
     @GetMapping
     public ResponseEntity<List<AccountInfoDTO>> getAllAccounts(){
         return ResponseEntity.ok(accountService.getAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<AccountInfoDTO> getAccountById(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(accountService.getById(id));
     }
 
 }

@@ -1,13 +1,8 @@
 package com.example.demo.Mapper;
 
 import com.example.demo.DTO.AccountInfoDTO;
-import com.example.demo.JWT.SignupRequest;
 import com.example.demo.Model.Account;
-import com.example.demo.Model.User;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
-import java.util.Set;
 
 @Component
 public class AccountMapperImpl implements AccountMapper{

@@ -6,7 +6,6 @@ import com.example.demo.Repository.AccountRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +22,6 @@ import java.util.stream.Collectors;
 @Component
 public class JwtTokenService {
 
-
-//    @Value("${jwt.secret}")
-//    private final String jwtSecret;
-//    @Value("${jwt.expiration}")
-
     private final int expiration;
     private SecretKey key;
     private AccountRepository accountRepository;
@@ -42,12 +36,6 @@ public class JwtTokenService {
     }
 
     private final static Logger logger = LoggerFactory.getLogger(JwtTokenService.class);
-
-
-//    @PostConstruct
-//    public void init(){
-//        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-//    }
 
     public String generateToken(String email, Collection<? extends GrantedAuthority> authorities){
         Account account = accountRepository.findByEmail(email).orElseThrow(
@@ -65,46 +53,4 @@ public class JwtTokenService {
                 .compact();
     }
 
-
-//    public List<GrantedAuthority> getAuthorityFromToken(String token){
-//        List<String> authorities = Jwts.parserBuilder()
-//                .setSigningKey(key)
-//                .build()
-//                .parseClaimsJws(token)
-//                .getBody()
-//                .get("authorities", List.class);
-//
-//        return authorities.stream()
-//                .map(SimpleGrantedAuthority::new)
-//                .collect(Collectors.toList());
-////    }
-//
-//    public String getEmailFromToken(String token){
-//        return Jwts.parserBuilder()
-//                .setSigningKey(key).build()
-//                .parseClaimsJws(token)
-//                .getBody()
-//                .getSubject();
-//    }
-
-//    public String getTokenFromRequest(HttpServletRequest httpServletRequest){
-//        String token = httpServletRequest.getHeader("Authorization");
-//        if (token!= null && token.startsWith("Bearer ")){
-//            return token.substring(7);
-//        }
-//        return null;
-//    }
-
-//    public boolean validateToken(String token){
-//        try {
-//            Jwts.parserBuilder()
-//                    .setSigningKey(key)
-//                    .build()
-//                    .parseClaimsJws(token);
-//            return true;
-//        } catch (JwtException e){
-//            logger.warn("Invalid JWT token :" + e.getMessage());
-//        }
-//        return false;
-//    }
 }

@@ -65,8 +65,8 @@ public class TaskService {
         taskToSave.setAuthor(authorAndAssignee);
         taskToSave.setAssignee(authorAndAssignee);
 
-        taskRepository.save(taskToSave);
-        return taskToSave.getId();
+        Task savedTask = taskRepository.save(taskToSave);
+        return savedTask.getId();
     }
 
     @Transactional(readOnly = true)

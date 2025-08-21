@@ -1,8 +1,10 @@
 package com.example.demo.Mapper;
 
-import com.example.demo.DTO.*;
+import com.example.demo.DTO.ClientInfoResponseDTO;
+import com.example.demo.DTO.ClientResponseDTO;
+import com.example.demo.DTO.ClientWithTasksDTO;
+import com.example.demo.DTO.CreateClientDTO;
 import com.example.demo.Model.Client;
-import com.example.demo.Model.User;
 
 public interface ClientMapper {
 

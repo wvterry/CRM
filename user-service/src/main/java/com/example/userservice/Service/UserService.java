@@ -85,5 +85,12 @@ public class UserService {
         return userRepository.findAll().stream().map(userMapper::toUserInfoDTO).toList();
     }
 
+    @Transactional(readOnly = true)
+    public UserInfoDTO getById(Long id){
+        User user = userRepository.findById(id).orElseThrow(
+                () -> new NotFoundException("Пользователь с id " + id + " не найден"));
+        return userMapper.toUserInfoDTO(user);
+    }
+
 
 }

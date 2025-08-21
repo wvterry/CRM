@@ -169,5 +169,12 @@ public class AccountService {
                 () -> new NotFoundException("Аккаунт с пользователем " + userId + " не найден"));
         accountRepository.delete(account);
     }
+
+    @Transactional(readOnly = true)
+    public AccountInfoDTO getById(Long id){
+        Account account = accountRepository.findById(id).orElseThrow(
+                () -> new NotFoundException("Аккаунт с id " + id + " не найден"));
+        return accountMapper.toAccountInfoDTO(account);
+    }
 }
 

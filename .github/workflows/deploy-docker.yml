@@ -1,7 +1,11 @@
 name: Build and Push Docker Image
 
+#on:
+#  push:
+#    branches:
+#      - main
 on:
-  push:
+  pull_request:
     branches:
       - main
 
@@ -36,5 +40,13 @@ jobs:
         with:
           context: .
           file: ./user-service/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/user-service:latest
+
+      - name: Build and Push Kafka Admin Service Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./kafka-admin-service/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/user-service:latest
