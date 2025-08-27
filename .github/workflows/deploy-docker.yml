@@ -45,4 +45,4 @@ jobs:
           context: .
           file: ./kafka-admin-service/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/user-service:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/kafka-admin-service:latest

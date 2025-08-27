@@ -12,7 +12,4 @@ public class UserInfoDTO {
     private String firstName;
 
     private String lastName;
-
-
-
 }

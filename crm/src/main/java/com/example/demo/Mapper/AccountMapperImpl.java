@@ -5,7 +5,7 @@ import com.example.demo.Model.Account;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AccountMapperImpl implements AccountMapper{
+public class AccountMapperImpl implements AccountMapper {
 
     @Override
     public AccountInfoDTO toAccountInfoDTO(Account account) {

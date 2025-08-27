@@ -5,9 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
-@NoArgsConstructor
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateUserDTO {
 
     @NotBlank(message = "First name is required")
@@ -15,5 +15,4 @@ public class CreateUserDTO {
 
     @NotBlank(message = "Last name is required")
     private String lastName;
-
 }

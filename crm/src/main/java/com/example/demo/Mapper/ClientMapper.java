@@ -8,7 +8,10 @@ import com.example.demo.Model.Client;
 
 public interface ClientMapper {
     ClientInfoResponseDTO toClientInfoResponseDTO(Client client);
+
     Client toClient(CreateClientDTO createClientDTO);
+
     ClientWithTasksDTO toClientAndHisTasksDTO(Client client);
+
     ClientResponseDTO toClientResponseDTO(Client client);
 }

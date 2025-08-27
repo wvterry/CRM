@@ -20,13 +20,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import static org.mockito.ArgumentMatchers.any;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,7 +52,7 @@ public class UserServiceTest {
     private UserClient userClient;
 
     @Test
-    void updateUserTest(){
+    void updateUserTest() {
         //Arrange
         when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(USER_1));
         when(userRepository.save(USER_1)).thenReturn(USER_1);
@@ -70,12 +70,12 @@ public class UserServiceTest {
     }
 
     @Test
-    void updateUserTest_Exception(){
+    void updateUserTest_Exception() {
         //Arrange
         when(userRepository.findById(USER_ID_1)).thenReturn(Optional.empty());
 
         //Assert
-        assertThrows(NotFoundException.class, ()-> userService.updateUser(USER_ID_1, UPDATE_USER_DTO_1));
+        assertThrows(NotFoundException.class, () -> userService.updateUser(USER_ID_1, UPDATE_USER_DTO_1));
         verify(userRepository).findById(USER_ID_1);
     }
 

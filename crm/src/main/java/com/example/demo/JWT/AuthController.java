@@ -26,8 +26,8 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public String authenticateUser(@RequestBody AuthRequest authRequest){
-       return accountService.authenticate(authRequest);
+    public String authenticateUser(@RequestBody AuthRequest authRequest) {
+        return accountService.authenticate(authRequest);
     }
 
     @PostMapping("/signup")
@@ -38,7 +38,7 @@ public class AuthController {
 
     @PutMapping("/updatepass")
     public ResponseEntity<Void> updatePassword(HttpServletRequest httpServletRequest,
-                                               @RequestBody UpdatePasswordDTO updatePasswordDTO) throws BadRequestException{
+                                               @RequestBody UpdatePasswordDTO updatePasswordDTO) throws BadRequestException {
         String token = jwtUtil.getTokenFromRequest(httpServletRequest);
         String email = jwtUtil.getEmailFromToken(token);
         accountService.updatePass(email, updatePasswordDTO);
@@ -48,7 +48,7 @@ public class AuthController {
     @PutMapping("/updaterole/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> updateAccountRole(@PathVariable("id") Long accountId,
-                                                  @RequestBody UpdateAccountRoleDTO updateAccountRoleDTO){
+                                                  @RequestBody UpdateAccountRoleDTO updateAccountRoleDTO) {
         accountService.updateRole(accountId, updateAccountRoleDTO);
         return ResponseEntity.ok().build();
     }

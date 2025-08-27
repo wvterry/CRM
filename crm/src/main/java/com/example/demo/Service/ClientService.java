@@ -1,5 +1,6 @@
 package com.example.demo.Service;
 
+import com.example.demo.Constants.UserConstants;
 import com.example.demo.DTO.*;
 import com.example.demo.Exception.NotFoundException;
 import com.example.demo.Mapper.ClientMapper;
@@ -9,6 +10,7 @@ import com.example.demo.Model.User;
 import com.example.demo.Repository.AccountRepository;
 import com.example.demo.Repository.ClientRepository;
 import com.example.demo.Repository.UserRepository;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,19 +20,17 @@ import java.util.Optional;
 
 @Service
 public class ClientService {
-
     private final ClientRepository clientRepository;
     private final ClientMapper clientMapper;
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
 
 
-
     @Autowired
     public ClientService(ClientRepository clientRepository,
                          ClientMapper clientMapper,
                          UserRepository userRepository,
-                         AccountRepository accountRepository){
+                         AccountRepository accountRepository) {
         this.clientRepository = clientRepository;
         this.clientMapper = clientMapper;
         this.userRepository = userRepository;
@@ -38,12 +38,12 @@ public class ClientService {
     }
 
     @Transactional(readOnly = true)
-    public List<ClientInfoResponseDTO> getAllClients(){
+    public List<ClientInfoResponseDTO> getAllClients() {
         return clientRepository.findAll().stream().map(clientMapper::toClientInfoResponseDTO).toList();
     }
 
     @Transactional(readOnly = true)
-    public ClientResponseDTO getClientByInn(Long inn){
+    public ClientResponseDTO getClientByInn(Long inn) {
         Client client = clientRepository
                 .findByInn(inn)
                 .orElseThrow(() -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
@@ -51,10 +51,10 @@ public class ClientService {
     }
 
     @Transactional
-    public Long saveClient(String creatorEmail, CreateClientDTO createClientDTO){
+    public Long saveClient(String creatorEmail, CreateClientDTO createClientDTO) throws BadRequestException {
 
-        if (clientRepository.findByInn(createClientDTO.getInn()).isPresent()){
-            throw new RuntimeException("Клиент с таким ИНН уже есть в системе");
+        if (clientRepository.findByInn(createClientDTO.getInn()).isPresent()) {
+            throw new BadRequestException("Клиент с таким ИНН уже есть в системе");
         }
         Account account = accountRepository.findByEmail(creatorEmail).get();
         User user = userRepository.findById(account.getUser().getUserId()).get();
@@ -67,23 +67,23 @@ public class ClientService {
     }
 
     @Transactional
-    public void deleteClientByInn(Long inn){
+    public void deleteClientByInn(Long inn) {
         Optional<Client> clientForDelete = clientRepository.findByInn(inn);
-        if (clientForDelete.isEmpty()){
+        if (clientForDelete.isEmpty()) {
             throw new NotFoundException("Клиент с ИНН " + inn + " не найден");
         }
         clientRepository.deleteByInn(inn);
     }
 
     @Transactional(readOnly = true)
-    public ClientWithTasksDTO getClientsAndHisTasks(Long inn){
+    public ClientWithTasksDTO getClientsAndHisTasks(Long inn) {
         Client client = clientRepository.findByInn(inn).orElseThrow(
                 () -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
-      return clientMapper.toClientAndHisTasksDTO(client);
+        return clientMapper.toClientAndHisTasksDTO(client);
     }
 
     @Transactional
-    public ClientResponseDTO updateClient(Long inn, ClientForUpdateDTO clientForUpdateDTO){
+    public ClientResponseDTO updateClient(Long inn, ClientForUpdateDTO clientForUpdateDTO) {
         Client clientForUpdate = clientRepository
                 .findByInn(inn)
                 .orElseThrow(() -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
@@ -95,5 +95,16 @@ public class ClientService {
 
         clientRepository.save(clientForUpdate);
         return clientMapper.toClientResponseDTO(clientForUpdate);
+    }
+
+    @Transactional
+    public void changeManagerHandler(Long userId){
+        User manager = userRepository.findById(userId).get();
+        User noNameUser = userRepository.findById(UserConstants.NO_NAME_USER_ID).get();
+        List<Client> usersClients = clientRepository.findByManager(manager);
+        usersClients.forEach(client -> {
+            client.setManager(noNameUser);
+            clientRepository.save(client);
+        });
     }
 }

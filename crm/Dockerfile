@@ -11,8 +11,6 @@ COPY . .
 
 RUN mvn dependency:go-offline -B
 
-#COPY . .
-
 RUN mvn package -pl crm -am -DskipTests
 
 FROM eclipse-temurin:17.0.3_7-jre

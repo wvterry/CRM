@@ -20,25 +20,25 @@ public class TaskController {
     private final JwtUtil jwtUtil;
 
     @Autowired
-    public TaskController(TaskService taskService, JwtUtil jwtUtil){
+    public TaskController(TaskService taskService, JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
         this.taskService = taskService;
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskResponseDTO>> getAllTasks(){
+    public ResponseEntity<List<TaskResponseDTO>> getAllTasks() {
         return ResponseEntity.ok(taskService.getAllTasks());
     }
 
     @GetMapping("/client/{inn}")
-    public ResponseEntity<List<TaskResponseDTO>> getAllTasksByClientInn(@PathVariable("inn") Long inn){
+    public ResponseEntity<List<TaskResponseDTO>> getAllTasksByClientInn(@PathVariable("inn") Long inn) {
         return ResponseEntity.ok(taskService.getAllTasksByClientInn(inn));
     }
 
     @PostMapping("/create/{inn}")
     public ResponseEntity<Long> createTask(HttpServletRequest httpServletRequest,
                                            @PathVariable("inn") Long inn,
-                                           @RequestBody TaskCreateDTO taskCreateDTO){
+                                           @RequestBody TaskCreateDTO taskCreateDTO) {
         String token = jwtUtil.getTokenFromRequest(httpServletRequest);
         String email = jwtUtil.getEmailFromToken(token);
         Long taskId = taskService.saveTask(email, taskCreateDTO, inn);
@@ -46,7 +46,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable("id") Long id,@RequestBody TaskUpdateDTO taskUpdateDTO){
+    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable("id") Long id, @RequestBody TaskUpdateDTO taskUpdateDTO) {
         TaskResponseDTO taskForUpdate = taskService.updateTask(id, taskUpdateDTO);
         return ResponseEntity.ok(taskForUpdate);
     }
@@ -62,22 +62,22 @@ public class TaskController {
 
     @PutMapping("/change/assignee/{id}")
     public ResponseEntity<TaskResponseDTO> changeAssignee(HttpServletRequest httpServletRequest,
-                                               @PathVariable("id") Long id,
-                                               @RequestBody TaskAssigneeDTO taskAssigneeDTO) throws AccessDeniedException {
+                                                          @PathVariable("id") Long id,
+                                                          @RequestBody TaskAssigneeDTO taskAssigneeDTO) throws AccessDeniedException {
         String token = jwtUtil.getTokenFromRequest(httpServletRequest);
         String email = jwtUtil.getEmailFromToken(token);
         return ResponseEntity.ok(taskService.changeAssignee(email, id, taskAssigneeDTO));
     }
 
     @GetMapping("/mytasks")
-    public ResponseEntity<List<TaskResponseDTO>> getAllMyTasks(HttpServletRequest httpServletRequest){
+    public ResponseEntity<List<TaskResponseDTO>> getAllMyTasks(HttpServletRequest httpServletRequest) {
         String token = jwtUtil.getTokenFromRequest(httpServletRequest);
         String email = jwtUtil.getEmailFromToken(token);
         return ResponseEntity.ok(taskService.getMyTasks(email));
     }
 
     @GetMapping("/mycreatedtasks")
-    public ResponseEntity<List<TaskResponseDTO>> getTasksCreatedByCurrentUser(HttpServletRequest httpServletRequest){
+    public ResponseEntity<List<TaskResponseDTO>> getTasksCreatedByCurrentUser(HttpServletRequest httpServletRequest) {
         String token = jwtUtil.getTokenFromRequest(httpServletRequest);
         String email = jwtUtil.getEmailFromToken(token);
         return ResponseEntity.ok(taskService.getTasksCreatedByMe(email));

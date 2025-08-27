@@ -1,44 +1,47 @@
 package com.example.demo.Service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import com.example.demo.DTO.*;
 import com.example.demo.Enum.ClientType;
 import com.example.demo.Exception.NotFoundException;
 import com.example.demo.Mapper.ClientMapper;
 import com.example.demo.Model.Account;
 import com.example.demo.Model.Client;
-
 import com.example.demo.Model.Task;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.AccountRepository;
 import com.example.demo.Repository.ClientRepository;
 import com.example.demo.Repository.UserRepository;
+import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-
 import java.util.List;
 import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
 public class ClientServiceTest {
 
+    private static final Long USER_ID_1 = 3L;
+    private static final Long USER_ID_2 = 2L;
+    private Long USER_ID_3 = 4L;
+    private static final Long NO_NAME_USER_ID = 1L;
     private static final Long CLIENT_INN_1 = 1L;
     private static final Long CLIENT_INN_2 = 2L;
-
-    private static final User USER_1 = new User(1L, "Egor", "Zhukov");
-
-    private static final User USER_2 = new User(2L,"Ivan", "Ivanov");
-
+    private Long CLIENT_INN_3 = 3L;
+    private static final User USER_1 = new User(USER_ID_1, "Egor", "Zhukov");
+    private static final User USER_2 = new User(USER_ID_2, "Ivan", "Ivanov");
+    private User USER_3 = new User(USER_ID_3, "Zhora", "Kryzhuvnikov");
+    private static final User NO_NAME_USER = new User(NO_NAME_USER_ID, "No", "Name");
     private static final String EMAIL = "email@email.ru";
     private static final Account ACCOUNT_1 = new Account(1L, EMAIL, USER_1);
-
-
     private static final Client CLIENT_1 = new Client(
             CLIENT_INN_1,
             "Test1",
@@ -49,7 +52,6 @@ public class ClientServiceTest {
             List.of(),
             USER_1
     );
-
     private static final Client CLIENT_2 = new Client(
             CLIENT_INN_2,
             "Test2",
@@ -61,26 +63,30 @@ public class ClientServiceTest {
             USER_2
     );
 
+    private Client CLIENT_3 = new Client(
+            CLIENT_INN_3,
+            "Test3",
+            "88007008000",
+            "test3@test.ru",
+            "Test3 street",
+            ClientType.LEGAL_ENTITY,
+            List.of(),
+            USER_3);
     private static final ClientResponseDTO CLIENT_RESPONSE_DTO_1 = new ClientResponseDTO(
             "Test1", "111", "test1@test.ru", "Test street1", ClientType.LEGAL_ENTITY
     );
-
     private static final ClientResponseDTO CLIENT_RESPONSE_DTO_2 = new ClientResponseDTO(
             "Test2", "222", "test2@test.ru", "Test street2", ClientType.LEGAL_ENTITY
     );
-
     private static final CreateClientDTO CREATE_CLIENT_DTO_1 = new CreateClientDTO(
             CLIENT_INN_1, "Test1", ClientType.LEGAL_ENTITY
     );
-
     private static final ClientForUpdateDTO CLIENT_FOR_UPDATE_DTO_1 = new ClientForUpdateDTO(
             "Test", "88005553535", "test@test.ru", "Test street"
     );
-
     private static final ClientInfoResponseDTO CLIENT_INFO_RESPONSE_DTO_1 = new ClientInfoResponseDTO(
             CLIENT_INN_1, "Test1", ClientType.LEGAL_ENTITY
     );
-
     private static final ClientInfoResponseDTO CLIENT_INFO_RESPONSE_DTO_2 = new ClientInfoResponseDTO(
             CLIENT_INN_2, "Test2", ClientType.LEGAL_ENTITY
     );
@@ -101,12 +107,12 @@ public class ClientServiceTest {
     private AccountRepository accountRepository;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testGetAllClients(){
+    void testGetAllClients() {
 
         // Arrange
         when(clientRepository.findAll()).thenReturn(List.of(CLIENT_1, CLIENT_2));
@@ -127,7 +133,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    void testGetClientByInn_ClientExist(){
+    void testGetClientByInn_ClientExist() {
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.of(CLIENT_1));
         when(clientMapper.toClientResponseDTO(CLIENT_1)).thenReturn(CLIENT_RESPONSE_DTO_1);
@@ -143,7 +149,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    void testGetClientByInn_ClientNotFound_Exception(){
+    void testGetClientByInn_ClientNotFound_Exception() {
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.empty());
 
@@ -153,7 +159,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    void testSaveClient(){
+    void testSaveClient() throws BadRequestException {
         // Arrange
         when(accountRepository.findByEmail(EMAIL)).thenReturn(Optional.of(ACCOUNT_1));
         when(userRepository.findById(ACCOUNT_1.getUser().getUserId())).thenReturn(Optional.of(USER_1));
@@ -172,7 +178,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    void testDeleteClientByInn_ClientExist(){
+    void testDeleteClientByInn_ClientExist() {
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.of(CLIENT_1));
 
@@ -185,7 +191,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    void testDeleteClientByInn_ClientNotExist_Exception(){
+    void testDeleteClientByInn_ClientNotExist_Exception() {
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.empty());
 
@@ -196,7 +202,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    void testGetClientsAndHisTasks_ClientExist(){
+    void testGetClientsAndHisTasks_ClientExist() {
 
         Task task1 = new Task();
         Task task2 = new Task();
@@ -222,7 +228,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    void testGetClientsAndHisTasks_ClientNotFound_Exception(){
+    void testGetClientsAndHisTasks_ClientNotFound_Exception() {
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.empty());
 
@@ -232,7 +238,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    void testUpdateClient_ClientExist(){
+    void testUpdateClient_ClientExist() {
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.of(CLIENT_1));
         when(clientMapper.toClientResponseDTO(CLIENT_1)).thenReturn(CLIENT_RESPONSE_DTO_1);
@@ -249,7 +255,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    void testUpdateClient_ClientNotFound_Exception(){
+    void testUpdateClient_ClientNotFound_Exception() {
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.empty());
 
@@ -257,4 +263,23 @@ public class ClientServiceTest {
         assertThrows(NotFoundException.class, () -> clientService.updateClient(CLIENT_INN_1, CLIENT_FOR_UPDATE_DTO_1));
         verify(clientRepository).findByInn(CLIENT_INN_1);
     }
+
+    @Test
+    void changeManagerHandler_UpdatesClientsManager() {
+        // Arrange
+        when(userRepository.findById(USER_ID_3)).thenReturn(Optional.of(USER_3));
+        when(userRepository.findById(NO_NAME_USER_ID)).thenReturn(Optional.of(NO_NAME_USER));
+        when(clientRepository.findByManager(USER_3)).thenReturn(List.of(CLIENT_3));
+
+        //Act
+        clientService.changeManagerHandler(USER_ID_3);
+
+        //Assert
+        assertEquals(NO_NAME_USER, CLIENT_3.getManager());
+        verify(userRepository).findById(USER_ID_3);
+        verify(userRepository).findById(NO_NAME_USER_ID);
+        verify(clientRepository).findByManager(USER_3);
+    }
+
+
 }

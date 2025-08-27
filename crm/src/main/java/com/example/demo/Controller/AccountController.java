@@ -23,9 +23,9 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    @PutMapping("/updateemail")
+    @PutMapping("/update-email")
     public ResponseEntity<AccountInfoDTO> updateEmail(HttpServletRequest httpServletRequest,
-                                                      @RequestBody UpdateEmailDTO updateEmailDTO){
+                                                      @RequestBody UpdateEmailDTO updateEmailDTO) {
         String token = jwtUtil.getTokenFromRequest(httpServletRequest);
         String email = jwtUtil.getEmailFromToken(token);
 
@@ -33,7 +33,7 @@ public class AccountController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AccountInfoDTO>> getAllAccounts(){
+    public ResponseEntity<List<AccountInfoDTO>> getAllAccounts() {
         return ResponseEntity.ok(accountService.getAll());
     }
 

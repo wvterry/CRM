@@ -44,12 +44,12 @@ public class ClientMapperImp implements ClientMapper {
                 taskDTO.setCreatedAt(task.getCreatedAt());
                 return taskDTO;
             }).toList();
-        clientWithTasksDTO.setTasks(taskDTOS);
+            clientWithTasksDTO.setTasks(taskDTOS);
         }
         return clientWithTasksDTO;
     }
 
-    public ClientResponseDTO toClientResponseDTO(Client client){
+    public ClientResponseDTO toClientResponseDTO(Client client) {
         ClientResponseDTO clientResponseDTO = new ClientResponseDTO();
         clientResponseDTO.setName(client.getName());
         clientResponseDTO.setAddress(client.getAddress());

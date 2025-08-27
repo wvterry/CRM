@@ -1,9 +1,9 @@
 package com.example.userservice.Repository;
 
 import com.example.userservice.Model.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.ListCrudRepository;
+import org.springframework.transaction.annotation.Transactional;
 
-
-public interface UserRepository extends JpaRepository<User, Long> {
-
+@Transactional(readOnly = true)
+public interface UserRepository extends ListCrudRepository<User, Long> {
 }

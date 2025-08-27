@@ -76,20 +76,4 @@ public class KafkaConfig {
 
         return errorHandler;
     }
-
-//    @Bean
-//    public NewTopic userUpdatedTopic() {
-//        return TopicBuilder.name("user_updated")
-//                .partitions(1)
-//                .replicas(1)
-//                .build();
-//    }
-//
-//    @Bean
-//    public NewTopic userDeletedTopic() {
-//        return TopicBuilder.name("user_deleted")
-//                .partitions(1)
-//                .replicas(1)
-//                .build();
-//    }
 }

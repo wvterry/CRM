@@ -23,7 +23,6 @@ public class UserService {
     private final UserClient userClient;
 
 
-
     @Autowired
     public UserService(UserMapper userMapper,
                        UserRepository userRepository,

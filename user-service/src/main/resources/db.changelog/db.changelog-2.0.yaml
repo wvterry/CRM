@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: insert-default-user
+      author: EgorZhukov
+      changes:
+        - insert:
+            tableName: user_info
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 1
+              - column:
+                  name: first_name
+                  value: "Нет"
+              - column:
+                  name: last_name
+                  value: "исполнителя"
+
+  - changeSet:
+      id: reset-user-sequence
+      author: EgorZhukov
+      changes:
+        - sql:
+            sql: "ALTER SEQUENCE user_info_user_id_seq RESTART WITH 2;"

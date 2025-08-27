@@ -20,7 +20,9 @@ import org.mockito.quality.Strictness;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,51 +36,19 @@ public class TaskServiceTest {
     private static final Role ADMIN_ROLE = new Role("ADMIN");
     private static final Long USER_ID_1 = 1L;
     private static final Long USER_ID_2 = 2L;
-    private static final User USER_1 = new User(USER_ID_1, "Ivan", "Ivanov");
-    private static final User USER_2 = new User(USER_ID_2,"Egor", "Egorov");
-    private static final Long CLIENT_INN_1 = 1L;
-    private static final Long CLIENT_INN_2 = 2L;
+    private static final Long TASK_ID_3 = 3L;
+    private Long USER_ID_4 = 4L;
     private static final Long TASK_ID_1 = 1L;
     private static final Long TASK_ID_2 = 2L;
-    private static final Long TASK_ID_3 = 3L;
-    private static final String EMAIL_1 = "ivan@mail.com";
-    private static final String EMAIL_2 = "egor@mail.com";
-
+    private static final Long CLIENT_INN_1 = 1L;
+    private static final Long NO_NAME_USER_ID = 1L;
+    private static final User NO_NAME_USER = new User(NO_NAME_USER_ID, "No", "Name");
+    private static final User USER_1 = new User(USER_ID_1, "Ivan", "Ivanov");
+    private User USER_4 = new User(USER_ID_4, "Zhora", "Kryzhuvnikov");
     private static final Account ACCOUNT_1 = new Account(1L,
             "ivan@mail.com",
             USER_1,
             Set.of(USER_ROLE));
-
-    private static final Account ACCOUNT_2 = new Account(2L,
-            "egor@mail.com",
-            USER_2,
-            Set.of(ADMIN_ROLE));
-    private static final TaskResponseDTO TASK_RESPONSE_DTO_1 = new TaskResponseDTO(TASK_ID_1,
-            "Task 1",
-            "Description 1",
-            CLIENT_INN_1,
-            TaskStatus.NEW,
-            LocalDateTime.now(),
-            "Test Name");
-
-    private static final TaskResponseDTO TASK_RESPONSE_DTO_2 = new TaskResponseDTO(TASK_ID_2,
-            "Task 2",
-            "Description 2",
-            CLIENT_INN_2,
-            TaskStatus.NEW,
-            LocalDateTime.now(),
-            "Test Name");
-
-    private static final TaskResponseDTO TASK_RESPONSE_DTO_3 = new TaskResponseDTO(TASK_ID_3,
-            "Task 3",
-            "Description 3",
-            CLIENT_INN_1,
-            TaskStatus.NEW,
-            LocalDateTime.now(),
-            "Test Name");
-
-    private static final TaskUpdateDTO TASK_UPDATE_DTO_1 = new TaskUpdateDTO("New title", "New description");
-
     private static final Client CLIENT_1 = new Client(CLIENT_INN_1,
             "Test Company",
             "88005553535",
@@ -87,16 +57,45 @@ public class TaskServiceTest {
             ClientType.LEGAL_ENTITY,
             List.of(),
             USER_1);
+    private Task TASK_4 = new Task(TASK_ID_1, TaskStatus.NEW, USER_4, USER_1);
+    private Task TASK_5 = new Task(TASK_ID_1, TaskStatus.NEW, USER_1, USER_4);
+    private static final Task TASK_1 = new Task(TASK_ID_1, TaskStatus.NEW, USER_1, USER_1);
+    private static final Task TASK_3 = new Task(TASK_ID_3, TaskStatus.NEW, USER_1);
+    private static final User USER_2 = new User(USER_ID_2, "Egor", "Egorov");
+    private static final Account ACCOUNT_2 = new Account(2L,
+            "egor@mail.com",
+            USER_2,
+            Set.of(ADMIN_ROLE));
+    private static final Task TASK_2 = new Task(TASK_ID_2, TaskStatus.NEW, USER_2);
 
-    private static final Task TASK_1 = new Task(TASK_ID_1,  TaskStatus.NEW,  USER_1, USER_1);
-    private static final Task TASK_2 = new Task(TASK_ID_2,  TaskStatus.NEW,  USER_2);
-    private static final Task TASK_3 = new Task(TASK_ID_3,  TaskStatus.NEW,  USER_1);
+    private static final Long CLIENT_INN_2 = 2L;
+    private static final String EMAIL_1 = "ivan@mail.com";
+    private static final String EMAIL_2 = "egor@mail.com";
+    private static final TaskResponseDTO TASK_RESPONSE_DTO_1 = new TaskResponseDTO(TASK_ID_1,
+            "Task 1",
+            "Description 1",
+            CLIENT_INN_1,
+            TaskStatus.NEW,
+            LocalDateTime.now(),
+            "Test Name");
+    private static final TaskResponseDTO TASK_RESPONSE_DTO_2 = new TaskResponseDTO(TASK_ID_2,
+            "Task 2",
+            "Description 2",
+            CLIENT_INN_2,
+            TaskStatus.NEW,
+            LocalDateTime.now(),
+            "Test Name");
+    private static final TaskResponseDTO TASK_RESPONSE_DTO_3 = new TaskResponseDTO(TASK_ID_3,
+            "Task 3",
+            "Description 3",
+            CLIENT_INN_1,
+            TaskStatus.NEW,
+            LocalDateTime.now(),
+            "Test Name");
+    private static final TaskUpdateDTO TASK_UPDATE_DTO_1 = new TaskUpdateDTO("New title", "New description");
     private static final TaskCreateDTO TASK_CREATE_DTO_1 = new TaskCreateDTO("Task 1", "Description 1");
     private static final TaskStatusDTO TASK_STATUS_DTO = new TaskStatusDTO(TaskStatus.ARCHIVE);
     private static final TaskAssigneeDTO TASK_ASSIGNEE_DTO = new TaskAssigneeDTO(USER_ID_2);
-
-
-
 
 
     @InjectMocks
@@ -118,7 +117,7 @@ public class TaskServiceTest {
     private AccountRepository accountRepository;
 
     @Test
-    void testGetTaskById_TaskFound(){
+    void testGetTaskById_TaskFound() {
         // Arrange
         when(taskRepository.findById(TASK_ID_1)).thenReturn(Optional.of(TASK_1));
 
@@ -132,7 +131,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void testGetTaskById_TaskNotFound_Exception(){
+    void testGetTaskById_TaskNotFound_Exception() {
         // Arrange
         when(taskRepository.findById(TASK_ID_1)).thenReturn(Optional.empty());
 
@@ -142,7 +141,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void testGetAllTasksByClientInn(){
+    void testGetAllTasksByClientInn() {
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.of(CLIENT_1));
         when(taskRepository.findByClientInn(CLIENT_INN_1)).thenReturn(List.of(TASK_1));
@@ -159,7 +158,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void testGetAllTasks_ReturnsListOfDTOs(){
+    void testGetAllTasks_ReturnsListOfDTOs() {
         // Arrange
         when(taskRepository.findAll()).thenReturn(List.of(TASK_1, TASK_2));
         when(taskMapper.toTaskResponseDTO(TASK_1)).thenReturn(TASK_RESPONSE_DTO_1);
@@ -176,7 +175,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void testSaveTask_ClientExists_TaskSaved(){
+    void testSaveTask_ClientExists_TaskSaved() {
         // Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_1));
         when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(USER_1));
@@ -194,7 +193,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void testSaveTask_ClientNotFound_ThrowsException(){
+    void testSaveTask_ClientNotFound_ThrowsException() {
         // Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_1));
         when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(USER_1));
@@ -208,7 +207,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void testGetAllTasksByClientInn_ClientExists(){
+    void testGetAllTasksByClientInn_ClientExists() {
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.of(CLIENT_1));
         when(taskRepository.findByClientInn(CLIENT_INN_1)).thenReturn(List.of(TASK_1, TASK_3));
@@ -228,7 +227,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void testGetAllTasksByClientInn_ClientNotFound_Exception(){
+    void testGetAllTasksByClientInn_ClientNotFound_Exception() {
         // Arrange
         when(clientRepository.findByInn(CLIENT_INN_1)).thenReturn(Optional.empty());
 
@@ -238,7 +237,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void testUpdateTask_TaskExists(){
+    void testUpdateTask_TaskExists() {
         // Arrange
         when(taskRepository.findById(TASK_ID_1)).thenReturn(Optional.of(TASK_1));
         when(taskMapper.toTaskResponseDTO(TASK_1)).thenReturn(TASK_RESPONSE_DTO_1);
@@ -254,17 +253,17 @@ public class TaskServiceTest {
     }
 
     @Test
-    void testUpdateTask_TaskNotFound_Exception(){
+    void testUpdateTask_TaskNotFound_Exception() {
         // Arrange
         when(taskRepository.findById(TASK_ID_1)).thenReturn(Optional.empty());
 
         // Assert
-        assertThrows(NotFoundException.class, ()-> taskService.updateTask(TASK_ID_1, TASK_UPDATE_DTO_1));
+        assertThrows(NotFoundException.class, () -> taskService.updateTask(TASK_ID_1, TASK_UPDATE_DTO_1));
         verify(taskRepository).findById(TASK_ID_1);
     }
 
     @Test
-    void getMyTasksTest(){
+    void getMyTasksTest() {
         // Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_1));
         when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(USER_1));
@@ -291,7 +290,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void getMyTasksTest_UserNotFound(){
+    void getMyTasksTest_UserNotFound() {
         // Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.empty());
 
@@ -300,7 +299,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void getTasksCreatedByMeTest(){
+    void getTasksCreatedByMeTest() {
         //Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_1));
         when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(USER_1));
@@ -321,7 +320,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void getTasksCreatedByMeTest_Exception(){
+    void getTasksCreatedByMeTest_Exception() {
         //Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.empty());
 
@@ -352,7 +351,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void changeStatusTest_Admin() throws AccessDeniedException{
+    void changeStatusTest_Admin() throws AccessDeniedException {
         //Arrange
         when(accountRepository.findByEmail(EMAIL_2)).thenReturn(Optional.of(ACCOUNT_2));
         when(userRepository.findById(USER_ID_2)).thenReturn(Optional.of(USER_2));
@@ -373,7 +372,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void changeStatusTest_ExceptionUserNotFound(){
+    void changeStatusTest_ExceptionUserNotFound() {
         //Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.empty());
 
@@ -384,7 +383,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void changeStatusTest_ExceptionTaskNotFound(){
+    void changeStatusTest_ExceptionTaskNotFound() {
         //Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_1));
         when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(USER_1));
@@ -399,7 +398,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void changeAssignee() throws AccessDeniedException{
+    void changeAssignee() throws AccessDeniedException {
         // Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_1));
         when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(USER_1));
@@ -421,7 +420,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void changeAssignee_Admin() throws AccessDeniedException{
+    void changeAssignee_Admin() throws AccessDeniedException {
         //Arrange
         when(accountRepository.findByEmail(EMAIL_2)).thenReturn(Optional.of(ACCOUNT_2));
         when(userRepository.findById(USER_ID_2)).thenReturn(Optional.of(USER_2));
@@ -442,7 +441,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void changeAssignee_ExceptionUserNotFound(){
+    void changeAssignee_ExceptionUserNotFound() {
         //Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.empty());
         //Assert
@@ -452,7 +451,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    void changeAssignee_ExceptionTaskNotFound(){
+    void changeAssignee_ExceptionTaskNotFound() {
         //Arrange
         when(accountRepository.findByEmail(EMAIL_2)).thenReturn(Optional.of(ACCOUNT_2));
         when(userRepository.findById(USER_ID_2)).thenReturn(Optional.of(USER_2));
@@ -465,5 +464,34 @@ public class TaskServiceTest {
         verify(userRepository).findById(USER_ID_2);
     }
 
+    @Test
+    void changeAssigneeHandler_UpdatesTasksAssignee() {
+        //Arrange
+        when(taskRepository.findAllByUserId(USER_ID_4)).thenReturn(List.of(TASK_4));
+        when(userRepository.findById(NO_NAME_USER_ID)).thenReturn(Optional.of(NO_NAME_USER));
+
+        //Act
+        taskService.changeAssigneeHandler(USER_ID_4);
+
+        //Assert
+        assertEquals(NO_NAME_USER, TASK_4.getAssignee());
+        verify(taskRepository).findAllByUserId(USER_ID_4);
+        verify(userRepository).findById(NO_NAME_USER_ID);
+    }
+
+    @Test
+    void changeAuthorHandler_UpdatesTasksAuthor() {
+        //Arrange
+        when(taskRepository.findByAuthorUserId(USER_ID_4)).thenReturn(List.of(TASK_5));
+        when(userRepository.findById(NO_NAME_USER_ID)).thenReturn(Optional.of(NO_NAME_USER));
+
+        //Act
+        taskService.changeAuthorHandler(USER_ID_4);
+
+        //Assert
+        assertEquals(NO_NAME_USER, TASK_5.getAuthor());
+        verify(taskRepository).findByAuthorUserId(USER_ID_4);
+        verify(userRepository).findById(NO_NAME_USER_ID);
+    }
 
 }

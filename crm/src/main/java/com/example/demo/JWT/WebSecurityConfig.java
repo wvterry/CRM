@@ -1,5 +1,8 @@
 package com.example.demo.JWT;
 
+import com.example.securitycommon.jwt.CommonAuthEntryPoint;
+import com.example.securitycommon.jwt.CommonAuthTokenFilter;
+import com.example.securitycommon.jwt.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -14,9 +17,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import com.example.securitycommon.jwt.CommonAuthTokenFilter;
-import com.example.securitycommon.jwt.JwtUtil;
-import com.example.securitycommon.jwt.CommonAuthEntryPoint;
 
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @Configuration
@@ -36,7 +36,7 @@ public class WebSecurityConfig {
                                                  @Value("${internal.api.key:}") String internalApiKey,
                                                  @Value("${security.fail-fast.missing-auth:false}") boolean failMissing,
                                                  @Value("${security.fail-fast.invalid-jwt:false}") boolean failInvalid) {
-        return new CommonAuthTokenFilter(jwtUtil, allowInternal,internalApiKey, failMissing, failInvalid);
+        return new CommonAuthTokenFilter(jwtUtil, allowInternal, internalApiKey, failMissing, failInvalid);
     }
 
     @Bean
@@ -47,7 +47,7 @@ public class WebSecurityConfig {
 
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -56,15 +56,16 @@ public class WebSecurityConfig {
             @Value("${security.entrypoint.json:true}") boolean respondJson) {
         return new CommonAuthEntryPoint(respondJson);
     }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity,
                                                    CommonAuthTokenFilter authTokenFilter,
-                                                   AuthenticationEntryPoint authEntryPoint) throws Exception{
+                                                   AuthenticationEntryPoint authEntryPoint) throws Exception {
         httpSecurity
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.disable())
                 .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(authEntryPoint))
-                .sessionManagement(sessionManagement-> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/api/auth/signup", "/api/auth/signin").permitAll()
                         .anyRequest().authenticated()

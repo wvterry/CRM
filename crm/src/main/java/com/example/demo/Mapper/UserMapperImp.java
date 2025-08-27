@@ -7,7 +7,7 @@ import com.example.demo.Model.User;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserMapperImp implements UserMapper{
+public class UserMapperImp implements UserMapper {
 
     @Override
     public UserInfoDTO toUserInfoDTO(User user) {

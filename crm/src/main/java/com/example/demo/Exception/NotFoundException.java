@@ -1,8 +1,8 @@
 package com.example.demo.Exception;
 
-public class NotFoundException extends RuntimeException{
+public class NotFoundException extends RuntimeException {
 
-    public NotFoundException(String massage){
+    public NotFoundException(String massage) {
         super(massage);
     }
 }

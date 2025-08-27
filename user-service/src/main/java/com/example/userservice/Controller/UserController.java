@@ -6,7 +6,7 @@ import com.example.userservice.DTO.UserIdResponseDTO;
 import com.example.userservice.DTO.UserInfoDTO;
 import com.example.userservice.Service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,15 +14,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/user")
 public class UserController {
 
     private final UserService userService;
-
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
     @PutMapping("/update/{id}")
     public ResponseEntity<UserInfoDTO> updateUser(@PathVariable("id") Long id, @Valid @RequestBody UpdateUserDTO updateUserDTO) {
@@ -30,7 +26,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserIdResponseDTO> createUser(@Valid @RequestBody CreateUserDTO createUserDTO) {
+    public ResponseEntity<UserIdResponseDTO> createUser(@RequestBody @Valid CreateUserDTO createUserDTO) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(createUserDTO));
     }
 

@@ -1,5 +1,7 @@
 package com.example.userservice.JWT;
 
+import com.example.securitycommon.jwt.CommonAuthEntryPoint;
+import com.example.securitycommon.jwt.CommonAuthTokenFilter;
 import com.example.securitycommon.jwt.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,9 +15,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import com.example.securitycommon.jwt.CommonAuthTokenFilter;
-
-import com.example.securitycommon.jwt.CommonAuthEntryPoint;
 
 @Configuration
 @EnableWebSecurity

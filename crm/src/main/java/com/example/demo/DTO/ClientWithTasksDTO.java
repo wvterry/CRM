@@ -2,7 +2,6 @@ package com.example.demo.DTO;
 
 import com.example.demo.Enum.ClientType;
 import com.example.demo.Enum.TaskStatus;
-import com.example.demo.Model.Task;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,7 +23,7 @@ public class ClientWithTasksDTO {
     private List<TaskDTO> tasks;
 
     @Data
-    public static class TaskDTO{
+    public static class TaskDTO {
         private Long id;
         private String title;
         private String description;

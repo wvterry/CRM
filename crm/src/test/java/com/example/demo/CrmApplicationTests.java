@@ -10,8 +10,8 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(properties = "spring.liquibase.enabled=false")
 class CrmApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
 }

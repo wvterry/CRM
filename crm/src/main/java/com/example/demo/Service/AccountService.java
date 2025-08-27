@@ -1,19 +1,20 @@
 package com.example.demo.Service;
 
-import com.example.demo.DTO.*;
+import com.example.demo.DTO.AccountInfoDTO;
+import com.example.demo.DTO.UpdateAccountRoleDTO;
+import com.example.demo.DTO.UpdateEmailDTO;
+import com.example.demo.DTO.UpdatePasswordDTO;
 import com.example.demo.Exception.NotFoundException;
 import com.example.demo.Feign.UserClient;
 import com.example.demo.JWT.AuthRequest;
 import com.example.demo.JWT.JwtTokenService;
 import com.example.demo.JWT.SignupRequest;
 import com.example.demo.Mapper.AccountMapper;
-import com.example.demo.Mapper.UserMapper;
 import com.example.demo.Model.Account;
 import com.example.demo.Model.Role;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.AccountRepository;
 import com.example.demo.Repository.RoleRepository;
-import com.example.demo.Repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -37,39 +39,36 @@ import java.util.Set;
 public class AccountService {
     private final AccountRepository accountRepository;
     private final UserClient userClient;
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final AccountMapper accountMapper;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenService jwtUtil;
     private final UserService userService;
-    private final TransactionTemplate transactionTemplate;
+    private final TaskService taskService;
+    private final ClientService clientService;
 
     @Autowired
     public AccountService(AccountRepository accountRepository,
                           UserClient userClient,
-                          UserRepository userRepository,
-                          UserMapper userMapper,
                           PasswordEncoder passwordEncoder,
                           RoleRepository roleRepository,
                           AccountMapper accountMapper,
                           AuthenticationManager authenticationManager,
                           JwtTokenService jwtUtil,
                           UserService userService,
-                          TransactionTemplate transactionTemplate) {
+                          TaskService taskService,
+                          ClientService clientService) {
         this.accountRepository = accountRepository;
         this.userClient = userClient;
-        this.userRepository = userRepository;
-        this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.accountMapper = accountMapper;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userService = userService;
-        this.transactionTemplate = transactionTemplate;
+        this.taskService = taskService;
+        this.clientService = clientService;
     }
 
     @Transactional
@@ -93,20 +92,31 @@ public class AccountService {
         accountToSave.setCreatedAt(LocalDateTime.now());
 
         try {
-            transactionTemplate.executeWithoutResult(transactionStatus -> {accountRepository.save(accountToSave);});
+            accountRepository.save(accountToSave);
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        log.info("Аккаунт успешно зарегистрирован: {}", accountToSave.getEmail());
+                    }
+                });
+            } else {
+                log.debug("Транзакция не активна — afterCommit обработчик не зарегистрирован");
+            }
         } catch (Exception saveEx) {
             if (user.getUserId() != null) {
                 try {
                     userClient.deleteUser(user.getUserId());
                 } catch (Exception roleBackEx) {
-                    throw new IllegalStateException
-                            ("Не удалось удалить пользователя с id " + user.getUserId() +
+                    throw new IllegalStateException(
+                            "Не удалось удалить пользователя с id " + user.getUserId() +
                                     ". Обратитесь к администратору", roleBackEx);
                 }
             }
             throw saveEx;
         }
     }
+
 
     @Transactional(readOnly = true)
     public String authenticate(AuthRequest authRequest) {
@@ -167,11 +177,16 @@ public class AccountService {
     public void deleteAccount(Long userId) {
         Account account = accountRepository.findByUserUserId(userId).orElseThrow(
                 () -> new NotFoundException("Аккаунт с пользователем " + userId + " не найден"));
+
+        taskService.changeAssigneeHandler(userId);
+        taskService.changeAuthorHandler(userId);
+        clientService.changeManagerHandler(userId);
+
         accountRepository.delete(account);
     }
 
     @Transactional(readOnly = true)
-    public AccountInfoDTO getById(Long id){
+    public AccountInfoDTO getById(Long id) {
         Account account = accountRepository.findById(id).orElseThrow(
                 () -> new NotFoundException("Аккаунт с id " + id + " не найден"));
         return accountMapper.toAccountInfoDTO(account);

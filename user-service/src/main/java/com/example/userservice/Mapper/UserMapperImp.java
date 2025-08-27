@@ -7,7 +7,7 @@ import com.example.userservice.Model.User;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserMapperImp implements UserMapper{
+public class UserMapperImp implements UserMapper {
 
     @Override
     public UserInfoDTO toUserInfoDTO(User user) {
@@ -18,11 +18,11 @@ public class UserMapperImp implements UserMapper{
     }
 
     @Override
-    public User toUser(CreateUserDTO createUserDTO) {
-        User user = new User();
-        user.setFirstName(createUserDTO.getFirstName());
-        user.setLastName(createUserDTO.getLastName());
-        return user;
+    public User toUser(CreateUserDTO user) {
+        return User.builder()
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .build();
     }
 
     @Override

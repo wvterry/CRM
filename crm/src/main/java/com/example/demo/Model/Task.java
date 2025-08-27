@@ -45,7 +45,7 @@ public class Task {
     private User author;
 
 
-    public Task(String title, String description, Client client){
+    public Task(String title, String description, Client client) {
         this.title = title;
         this.description = description;
         this.client = client;

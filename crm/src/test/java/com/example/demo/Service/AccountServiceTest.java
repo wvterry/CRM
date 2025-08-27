@@ -46,10 +46,10 @@ public class AccountServiceTest {
     private static final String PASSWORD = "password";
     private static final String ENCODED_PASSWORD = "encoded_password";
     private static final String NEW_PASSWORD = "password1";
-    private static final String EXPECTED_TOKEN= "mocked-jwt-token";
-    private static final Long USER_ID_1= 1L;
-    private static final Long ACCOUNT_ID_1= 1L;
-    private static final Long ACCOUNT_ID_2= 2L;
+    private static final String EXPECTED_TOKEN = "mocked-jwt-token";
+    private static final Long USER_ID_1 = 1L;
+    private static final Long ACCOUNT_ID_1 = 1L;
+    private static final Long ACCOUNT_ID_2 = 2L;
 
 
     private static final Role USER_ROLE = new Role("USER");
@@ -75,17 +75,16 @@ public class AccountServiceTest {
             "Egor",
             "Zhukov"
     );
-
-    private final static CreateUserResponseDTO USER_ID_RESPONSE_DTO = new CreateUserResponseDTO(USER_ID_1);
-    private final static CreateUserRequestDTO CREATE_USER_REQUEST_DTO = new CreateUserRequestDTO("Egor", "Zhukov");
-
     private final static Account ACCOUNT_1 = new Account(ACCOUNT_ID_1, EMAIL, USER_1, Set.of(USER_ROLE));
-    private final static Account ACCOUNT_2 = new Account(ACCOUNT_ID_2, EMAIL_1, ENCODED_PASSWORD);
-
     private final static AccountInfoDTO ACCOUNT_INFO_DTO =
             new AccountInfoDTO(ACCOUNT_ID_1, EMAIL, USER_1.getFirstName(), USER_1.getLastName());
-
-
+    private final static CreateUserResponseDTO USER_ID_RESPONSE_DTO = new CreateUserResponseDTO(USER_ID_1);
+    private final static CreateUserRequestDTO CREATE_USER_REQUEST_DTO = new CreateUserRequestDTO("Egor", "Zhukov");
+    private final static Account ACCOUNT_2 = new Account(ACCOUNT_ID_2, EMAIL_1, ENCODED_PASSWORD);
+    @Mock
+    PasswordEncoder passwordEncoder;
+    @Mock
+    AuthenticationManager authenticationManager;
     @InjectMocks
     private AccountService accountService;
     @Mock
@@ -97,13 +96,9 @@ public class AccountServiceTest {
     @Mock
     private UserMapper userMapper;
     @Mock
-    PasswordEncoder passwordEncoder;
-    @Mock
     private RoleRepository roleRepository;
     @Mock
     private AccountMapper accountMapper;
-    @Mock
-    AuthenticationManager authenticationManager;
     @Mock
     private JwtTokenService jwtUtil;
     @Mock
@@ -116,6 +111,11 @@ public class AccountServiceTest {
     private UserService userService;
     @Mock
     private TransactionTemplate transactionTemplate;
+    @Mock
+    private TaskService taskService;
+    @Mock
+    private ClientService clientService;
+
     @BeforeEach
     void setUp() {
         authRequest = new AuthRequest(EMAIL, PASSWORD);
@@ -129,7 +129,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void authenticateTest(){
+    void authenticateTest() {
         //Arrange
         Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
 
@@ -157,7 +157,7 @@ public class AccountServiceTest {
         when(userService.saveUser(SIGNUP_REQUEST)).thenReturn(USER_1);
         when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
         when(roleRepository.findByName("USER")).thenReturn(Optional.of(USER_ROLE));
-        doNothing().when(transactionTemplate).executeWithoutResult(any());
+        when(accountRepository.save(any(Account.class))).thenReturn(ACCOUNT_1);
 
         // Act
         assertDoesNotThrow(() -> accountService.register(SIGNUP_REQUEST));
@@ -167,11 +167,11 @@ public class AccountServiceTest {
         verify(userService).saveUser(SIGNUP_REQUEST);
         verify(passwordEncoder).encode(PASSWORD);
         verify(roleRepository).findByName("USER");
-        verify(transactionTemplate).executeWithoutResult(any());
+        verify(accountRepository).save(any(Account.class));
     }
 
     @Test
-    void register_Exception_EmailAlreadyExist(){
+    void register_Exception_EmailAlreadyExist() {
         // Arrange
         when(accountRepository.existsByEmail(EMAIL)).thenReturn(true);
 
@@ -228,8 +228,8 @@ public class AccountServiceTest {
         when(userService.saveUser(SIGNUP_REQUEST)).thenReturn(USER_1);
         when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
         when(roleRepository.findByName("USER")).thenReturn(Optional.of(USER_ROLE));
-        doThrow(new RuntimeException("saveEx"))
-                .when(transactionTemplate).executeWithoutResult(any());
+        when(accountRepository.save(any(Account.class)))
+                .thenThrow(new RuntimeException("saveEx"));
         doNothing().when(userClient).deleteUser(USER_ID_1);
 
         // Act
@@ -242,10 +242,10 @@ public class AccountServiceTest {
         verify(userService).saveUser(SIGNUP_REQUEST);
         verify(passwordEncoder).encode(PASSWORD);
         verify(roleRepository).findByName("USER");
-        verify(transactionTemplate).executeWithoutResult(any());
+        verify(accountRepository).save(any(Account.class));
         verify(userClient).deleteUser(USER_ID_1);
-        verify(accountRepository, never()).save(any());
     }
+
 
     @Test
     void register_Exception_AccountSaveFails_RollsBackException() throws BadRequestException {
@@ -254,8 +254,8 @@ public class AccountServiceTest {
         when(userService.saveUser(SIGNUP_REQUEST)).thenReturn(USER_1);
         when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
         when(roleRepository.findByName("USER")).thenReturn(Optional.of(USER_ROLE));
-        doThrow(new RuntimeException("DB save error"))
-                .when(transactionTemplate).executeWithoutResult(any());
+        when(accountRepository.save(any(Account.class)))
+                .thenThrow(new RuntimeException("DB save error"));
         doThrow(new RuntimeException("Rollback failed"))
                 .when(userClient).deleteUser(USER_ID_1);
 
@@ -268,14 +268,15 @@ public class AccountServiceTest {
                 exception.getMessage());
         assertNotNull(exception.getCause());
         assertEquals("Rollback failed", exception.getCause().getMessage());
+
         verify(accountRepository).existsByEmail(EMAIL);
         verify(userService).saveUser(SIGNUP_REQUEST);
         verify(passwordEncoder).encode(PASSWORD);
         verify(roleRepository).findByName("USER");
-        verify(transactionTemplate).executeWithoutResult(any());
+        verify(accountRepository).save(any(Account.class));
         verify(userClient).deleteUser(USER_ID_1);
-        verify(accountRepository, never()).save(any());
     }
+
 
     @Test
     void updatePass() throws BadRequestException {
@@ -295,28 +296,28 @@ public class AccountServiceTest {
     }
 
     @Test
-    void updatePass_AccountNotFound(){
+    void updatePass_AccountNotFound() {
         // Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.empty());
 
         //Assert
-        assertThrows(NotFoundException.class, ()-> accountService.updatePass(EMAIL_1, UPDATE_PASSWORD_DTO_1));
+        assertThrows(NotFoundException.class, () -> accountService.updatePass(EMAIL_1, UPDATE_PASSWORD_DTO_1));
         verify(accountRepository).findByEmail(EMAIL_1);
     }
 
     @Test
-    void updatePass_IncorrectPass(){
+    void updatePass_IncorrectPass() {
         // Arrange
         when(accountRepository.findByEmail(EMAIL_1)).thenReturn(Optional.of(ACCOUNT_2));
         when(passwordEncoder.matches(UPDATE_PASSWORD_DTO_1.getPassword(), ACCOUNT_2.getPassword())).thenReturn(false);
 
         //Assert
-        assertThrows(BadRequestException.class, ()-> accountService.updatePass(EMAIL_1, UPDATE_PASSWORD_DTO_1));
+        assertThrows(BadRequestException.class, () -> accountService.updatePass(EMAIL_1, UPDATE_PASSWORD_DTO_1));
         verify(accountRepository).findByEmail(EMAIL_1);
     }
 
     @Test
-    void updateRoleTest(){
+    void updateRoleTest() {
         // Arrange
         when(accountRepository.findById(ACCOUNT_ID_1)).thenReturn(Optional.of(ACCOUNT_1));
         when(roleRepository.findByName(UPDATE_ACCOUNT_ROLE_DTO.getRole())).thenReturn(Optional.of(MANAGER_ROLE));
@@ -333,23 +334,23 @@ public class AccountServiceTest {
     }
 
     @Test
-    void updateRole_AccountNotFound(){
+    void updateRole_AccountNotFound() {
         // Arrange
         when(accountRepository.findById(ACCOUNT_ID_1)).thenReturn(Optional.empty());
 
         //Assert
-        assertThrows(NotFoundException.class, ()-> accountService.updateRole(ACCOUNT_ID_1, UPDATE_ACCOUNT_ROLE_DTO));
+        assertThrows(NotFoundException.class, () -> accountService.updateRole(ACCOUNT_ID_1, UPDATE_ACCOUNT_ROLE_DTO));
         verify(accountRepository).findById(ACCOUNT_ID_1);
     }
 
     @Test
-    void updateRole_RoleNotFound(){
+    void updateRole_RoleNotFound() {
         // Arrange
         when(accountRepository.findById(ACCOUNT_ID_1)).thenReturn(Optional.of(ACCOUNT_1));
         when(roleRepository.findByName(UPDATE_ACCOUNT_ROLE_DTO.getRole())).thenReturn(Optional.empty());
 
         //Assert
-        assertThrows(NotFoundException.class, ()-> accountService.updateRole(ACCOUNT_ID_1, UPDATE_ACCOUNT_ROLE_DTO));
+        assertThrows(NotFoundException.class, () -> accountService.updateRole(ACCOUNT_ID_1, UPDATE_ACCOUNT_ROLE_DTO));
         verify(accountRepository).findById(ACCOUNT_ID_1);
         verify(roleRepository).findByName(UPDATE_ACCOUNT_ROLE_DTO.getRole());
     }
@@ -371,17 +372,17 @@ public class AccountServiceTest {
     }
 
     @Test
-    void updateEmail_AccountNotFound(){
+    void updateEmail_AccountNotFound() {
         // Arrange
         when(accountRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
 
         //Assert
-        assertThrows(NotFoundException.class, ()-> accountService.updateEmail(EMAIL, UPDATE_EMAIL_DTO));
+        assertThrows(NotFoundException.class, () -> accountService.updateEmail(EMAIL, UPDATE_EMAIL_DTO));
         verify(accountRepository).findByEmail(EMAIL);
     }
 
     @Test
-    void getAllTest(){
+    void getAllTest() {
         // Arrange
         when(accountRepository.findAll()).thenReturn(List.of(ACCOUNT_1));
         when(accountMapper.toAccountInfoDTO(ACCOUNT_1)).thenReturn(ACCOUNT_INFO_DTO);
@@ -396,7 +397,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void deleteAccountTest(){
+    void deleteAccountTest() {
         // Arrange
         when(accountRepository.findByUserUserId(USER_ID_1)).thenReturn(Optional.of(ACCOUNT_1));
 
@@ -405,10 +406,14 @@ public class AccountServiceTest {
 
         //Assert
         verify(accountRepository).findByUserUserId(USER_ID_1);
+        verify(taskService).changeAssigneeHandler(USER_ID_1);
+        verify(taskService).changeAuthorHandler(USER_ID_1);
+        verify(clientService).changeManagerHandler(USER_ID_1);
+        verify(accountRepository).delete(ACCOUNT_1);
     }
 
     @Test
-    void deleteAccountTest_AccountNotFound(){
+    void deleteAccountTest_AccountNotFound() {
         // Arrange
         when(accountRepository.findByUserUserId(USER_ID_1)).thenReturn(Optional.empty());
 
@@ -418,7 +423,7 @@ public class AccountServiceTest {
     }
 
     @Test
-    void getByIdTest(){
+    void getByIdTest() {
         // Arrange
         when(accountRepository.findById(ACCOUNT_ID_1)).thenReturn(Optional.of(ACCOUNT_1));
         when(accountMapper.toAccountInfoDTO(ACCOUNT_1)).thenReturn(ACCOUNT_INFO_DTO);

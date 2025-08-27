@@ -10,8 +10,8 @@ import org.springframework.retry.annotation.EnableRetry;
 @EnableRetry
 public class CrmApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(CrmApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(CrmApplication.class, args);
+    }
 
 }

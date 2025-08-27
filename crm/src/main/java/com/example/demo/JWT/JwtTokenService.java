@@ -33,7 +33,7 @@ public class JwtTokenService {
         this.accountRepository = accountRepository;
     }
 
-    public String generateToken(String email, Collection<? extends GrantedAuthority> authorities){
+    public String generateToken(String email, Collection<? extends GrantedAuthority> authorities) {
         Account account = accountRepository.findByEmail(email).orElseThrow(
                 () -> new NotFoundException("Пользователь с email " + email + " не найден"));
 

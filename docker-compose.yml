@@ -5,12 +5,13 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mypass
-      POSTGRES_DB: crm_db
     ports:
       - "5444:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db:/docker-entrypoint-initdb.d
+      - ./crm/01-crm.sql:/docker-entrypoint-initdb.d/01-crm.sql
+      - ./user-service/02-uservice.sql:/docker-entrypoint-initdb.d/02-uservice.sql
+
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.1
@@ -72,6 +73,7 @@ services:
     depends_on:
       - postgres
       - kafka
+      - kafka-admin-service
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/crm_db
       SPRING_DATASOURCE_USERNAME: postgres
@@ -89,6 +91,7 @@ services:
     depends_on:
       - postgres
       - kafka
+      - kafka-admin-service
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/uservice
       SPRING_DATASOURCE_USERNAME: postgres

@@ -1,5 +1,6 @@
 package com.example.demo.Service;
 
+import com.example.demo.Constants.UserConstants;
 import com.example.demo.DTO.*;
 import com.example.demo.Enum.TaskStatus;
 import com.example.demo.Exception.NotFoundException;
@@ -30,11 +31,11 @@ public class TaskService {
     private final AccountRepository accountRepository;
 
     @Autowired
-    public TaskService (TaskRepository taskRepository,
-                        ClientRepository clientRepository,
-                        TaskMapper taskMapper,
-                        UserRepository userRepository,
-                        AccountRepository accountRepository){
+    public TaskService(TaskRepository taskRepository,
+                       ClientRepository clientRepository,
+                       TaskMapper taskMapper,
+                       UserRepository userRepository,
+                       AccountRepository accountRepository) {
         this.taskRepository = taskRepository;
         this.clientRepository = clientRepository;
         this.taskMapper = taskMapper;
@@ -43,16 +44,16 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Task> getTaskById(Long id){
+    public Optional<Task> getTaskById(Long id) {
         Optional<Task> optionalTask = taskRepository.findById(id);
-        if (optionalTask.isEmpty()){
+        if (optionalTask.isEmpty()) {
             throw new NotFoundException("Задача с ID " + id + " не найдена");
         }
         return optionalTask;
     }
 
     @Transactional
-    public Long saveTask(String email, TaskCreateDTO taskCreateDTO, Long inn){
+    public Long saveTask(String email, TaskCreateDTO taskCreateDTO, Long inn) {
         User authorAndAssignee = getUserFromAccountEmail(email);
         Client client = clientRepository.findByInn(inn).orElseThrow(() -> new NotFoundException("Клиент с ИНН " + inn + " не найден"));
 
@@ -70,7 +71,7 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponseDTO> getAllTasks(){
+    public List<TaskResponseDTO> getAllTasks() {
         return taskRepository.findAll()
                 .stream()
                 .map(taskMapper::toTaskResponseDTO)
@@ -78,7 +79,7 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponseDTO> getAllTasksByClientInn(Long clientInn){
+    public List<TaskResponseDTO> getAllTasksByClientInn(Long clientInn) {
         Client client = clientRepository.findByInn(clientInn).orElseThrow(
                 () -> new NotFoundException("Клиент с ИНН " + clientInn + " не найден"));
         return taskRepository.findByClientInn(client.getInn())
@@ -88,7 +89,7 @@ public class TaskService {
     }
 
     @Transactional
-    public TaskResponseDTO updateTask(Long id, TaskUpdateDTO taskUpdateDTO){
+    public TaskResponseDTO updateTask(Long id, TaskUpdateDTO taskUpdateDTO) {
         Task taskForUpdate = taskRepository.findById(id).orElseThrow(
                 () -> new NotFoundException("Задача с id " + id + " не найдена"));
         taskForUpdate.setTitle(taskUpdateDTO.getTitle());
@@ -98,7 +99,7 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponseDTO> getMyTasks(String email){
+    public List<TaskResponseDTO> getMyTasks(String email) {
 
         User user = getUserFromAccountEmail(email);
 
@@ -112,7 +113,7 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponseDTO> getTasksCreatedByMe(String email){
+    public List<TaskResponseDTO> getTasksCreatedByMe(String email) {
 
         User user = getUserFromAccountEmail(email);
 
@@ -131,7 +132,7 @@ public class TaskService {
                                         TaskStatusDTO taskStatusDTO) throws AccessDeniedException {
         User user = getUserFromAccountEmail(email);
         Account account = accountRepository.findByEmail(email).orElseThrow(
-                ()-> new NotFoundException("Аккаунт с email " + email + " не найден"));
+                () -> new NotFoundException("Аккаунт с email " + email + " не найден"));
 
         Task task = taskRepository.findById(taskId).orElseThrow(() ->
                 new NotFoundException("Задача не найдена"));
@@ -158,12 +159,12 @@ public class TaskService {
     }
 
     @Transactional
-    public TaskResponseDTO changeAssignee (String email,
-                                           Long id,
-                                           TaskAssigneeDTO taskAssigneeDTO) throws AccessDeniedException {
+    public TaskResponseDTO changeAssignee(String email,
+                                          Long id,
+                                          TaskAssigneeDTO taskAssigneeDTO) throws AccessDeniedException {
         User user = getUserFromAccountEmail(email);
         Account account = accountRepository.findByEmail(email).orElseThrow(
-                ()-> new NotFoundException("Аккаунт с email " + email + " не найден"));
+                () -> new NotFoundException("Аккаунт с email " + email + " не найден"));
 
         Task task = taskRepository.findById(id).orElseThrow(
                 () -> new NotFoundException("Задача с ID " + id + " не найдена"));
@@ -179,7 +180,7 @@ public class TaskService {
                 .map(Role::getName)
                 .anyMatch(roleName -> "ADMIN".equals(roleName) || "MANAGER".equals(roleName));
 
-        if (!(isAssignee || isAdminOrManager)){
+        if (!(isAssignee || isAdminOrManager)) {
             throw new AccessDeniedException("У вас нет прав для изменения ответственного сотрудника");
         }
         task.setAssignee(newAssignee);
@@ -187,15 +188,36 @@ public class TaskService {
         return taskMapper.toTaskResponseDTO(task);
     }
 
-    public User getUserFromAccountEmail(String email){
+    public User getUserFromAccountEmail(String email) {
         Account account = accountRepository.findByEmail(email).orElseThrow(
-                ()-> new NotFoundException("Аккаунт с email " + email + " не найден"));
+                () -> new NotFoundException("Аккаунт с email " + email + " не найден"));
         User user = userRepository.findById(account.getUser().getUserId()).orElseThrow(
-                ()-> new NotFoundException("Пользователь с id " + account.getUser().getUserId() + " не найден"));
+                () -> new NotFoundException("Пользователь с id " + account.getUser().getUserId() + " не найден"));
         System.out.println("User loaded: " + user.getFirstName() + " " + user.getLastName());
 
         return user;
     }
+
+    @Transactional
+    public void changeAssigneeHandler(Long userId){
+        List<Task> usersAssigneeTasks = taskRepository.findAllByUserId(userId);
+        User noNameUser = userRepository.findById(UserConstants.NO_NAME_USER_ID).get();
+        usersAssigneeTasks.forEach(task -> {
+            task.setAssignee(noNameUser);
+            taskRepository.save(task);
+        });
+    }
+
+    @Transactional
+    public void changeAuthorHandler(Long userId){
+        List<Task> usersCreatedTasks = taskRepository.findByAuthorUserId(userId);
+        User noNameUser = userRepository.findById(UserConstants.NO_NAME_USER_ID).get();
+        usersCreatedTasks.forEach(task -> {
+            task.setAuthor(noNameUser);
+            taskRepository.save(task);
+        });
+    }
+
 
 
 }
