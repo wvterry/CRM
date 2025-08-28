@@ -12,8 +12,6 @@ COPY . .
 
 RUN mvn dependency:go-offline -B
 
-#COPY . .
-
 RUN mvn package -pl kafka-admin-service -am -DskipTests
 
 FROM eclipse-temurin:17-jdk

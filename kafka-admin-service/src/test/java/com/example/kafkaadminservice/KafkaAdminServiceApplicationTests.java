@@ -16,6 +16,7 @@ class KafkaAdminServiceApplicationTests {
 
     @MockBean
     private CommandLineRunner commandLineRunner;
+
     @Test
     void contextLoads() {
     }

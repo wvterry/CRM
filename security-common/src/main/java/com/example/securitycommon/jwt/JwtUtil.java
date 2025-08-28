@@ -38,26 +38,26 @@ public class JwtUtil {
         }
     }
 
-    public String getEmailFromToken(String token){
+    public String getEmailFromToken(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build()
                 .parseClaimsJws(token).getBody().getSubject();
     }
 
-    public String getTokenFromRequest(HttpServletRequest httpServletRequest){
+    public String getTokenFromRequest(HttpServletRequest httpServletRequest) {
         String token = httpServletRequest.getHeader("Authorization");
-        if (token!= null && token.startsWith("Bearer ")){
+        if (token != null && token.startsWith("Bearer ")) {
             return token.substring(7);
         }
         return null;
     }
 
-    public Long getUserId(String token){
+    public Long getUserId(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build()
                 .parseClaimsJws(token).getBody().get("userId", Long.class);
     }
 
     @SuppressWarnings("unchecked")
-    public List<GrantedAuthority> getAuthorities(String token){
+    public List<GrantedAuthority> getAuthorities(String token) {
         List<String> autorities = Jwts.parserBuilder().setSigningKey(key).build()
                 .parseClaimsJws(token).getBody().get("authorities", List.class);
         if (autorities == null) return Collections.emptyList();
