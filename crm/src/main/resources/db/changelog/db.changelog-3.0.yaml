@@ -1,0 +1,114 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-new-auth-structure-final
+      author: EgorZhukov
+      changes:
+        - createTable:
+            tableName: account
+            columns:
+              - column:
+                  name: account_id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+        - addColumn:
+            tableName: account
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    unique: true
+        - dropColumn:
+            tableName: user_detail
+            columnName: password
+        - dropColumn:
+            tableName: user_detail
+            columnName: email
+        - dropTable:
+            tableName: user_roles
+
+        - createTable:
+            tableName: account_roles
+            columns:
+              - column:
+                  name: account_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: account_roles
+            columnNames: account_id, role_id
+            constraintName: pk_account_roles
+
+        - addForeignKeyConstraint:
+            constraintName: fk_account_user
+            baseTableName: account
+            baseColumnNames: user_id
+            referencedTableName: user_detail
+            referencedColumnNames: user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+            deferrable: true
+            initiallyDeferred: true
+
+        - addForeignKeyConstraint:
+            constraintName: fk_account_roles_account
+            baseTableName: account_roles
+            baseColumnNames: account_id
+            referencedTableName: account
+            referencedColumnNames: account_id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            constraintName: fk_account_roles_role
+            baseTableName: account_roles
+            baseColumnNames: role_id
+            referencedTableName: roles
+            referencedColumnNames: role_id
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: account
+            indexName: idx_account_email
+            columns:
+              - column:
+                  name: email
+        - createIndex:
+            tableName: account
+            indexName: idx_account_user_id
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            tableName: account_roles
+            indexName: idx_account_roles_composite
+            columns:
+              - column:
+                  name: account_id
+              - column:
+                  name: role_id

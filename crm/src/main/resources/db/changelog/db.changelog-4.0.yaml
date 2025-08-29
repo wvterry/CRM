@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: insert-default-user-detail
+      author: EgorZhukov
+      changes:
+        - insert:
+            tableName: user_detail
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 1
+              - column:
+                  name: first_name
+                  value: "Нет"
+              - column:
+                  name: last_name
+                  value: "исполнителя"
+
+  - changeSet:
+      id: insert-default-account
+      author: EgorZhukov
+      changes:
+        - insert:
+            tableName: account
+            columns:
+              - column:
+                  name: account_id
+                  valueNumeric: 1
+              - column:
+                  name: email
+                  value: "no-executor@example.com"
+              - column:
+                  name: password
+                  value: "nopass"
+              - column:
+                  name: user_id
+                  valueNumeric: 1
+
+  - changeSet:
+      id: reset-user-detail-sequence
+      author: EgorZhukov
+      changes:
+        - sql:
+            sql: "ALTER SEQUENCE user_detail_user_id_seq RESTART WITH 2;"
+
+  - changeSet:
+      id: reset-account-sequence
+      author: EgorZhukov
+      changes:
+        - sql:
+            sql: "ALTER SEQUENCE account_account_id_seq RESTART WITH 2;"

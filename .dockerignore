@@ -1,0 +1,12 @@
+
+**/target
+**/.idea
+**/.git
+**/.mvn
+**/*.iml
+mvnw
+mvnw.cmd
+**/HELP.md
+**/README.md
+**/.github
+**/META-INF
