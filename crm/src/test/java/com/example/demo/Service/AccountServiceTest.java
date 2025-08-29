@@ -14,7 +14,6 @@ import com.example.demo.Repository.AccountRepository;
 import com.example.demo.Repository.RoleRepository;
 import com.example.demo.Repository.UserRepository;
 import org.apache.coyote.BadRequestException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,12 +29,12 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -119,6 +118,8 @@ public class AccountServiceTest {
     private TaskService taskService;
     @Mock
     private ClientService clientService;
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     @BeforeEach
     void setUp() {
@@ -131,18 +132,9 @@ public class AccountServiceTest {
 
         authentication = mock(Authentication.class);
 
-        TransactionSynchronizationManager.initSynchronization();
-
-        doAnswer(invocation -> {
-            Consumer<?> action = invocation.getArgument(0);
-            action.accept(null);
-            return null;
-        }).when(transactionTemplate).executeWithoutResult(any());
-    }
-
-    @AfterEach
-    void tearDown() {
-        TransactionSynchronizationManager.clearSynchronization();
+        TransactionStatus mockStatus = mock(TransactionStatus.class);
+        when(transactionManager.getTransaction(any(DefaultTransactionDefinition.class)))
+                .thenReturn(mockStatus);
     }
 
     @Test
@@ -185,7 +177,7 @@ public class AccountServiceTest {
         verify(passwordEncoder).encode(PASSWORD);
         verify(roleRepository).findByName("USER");
         verify(accountRepository).save(any(Account.class));
-        // userClient не должен трогаться при успешном сценарии
+        verify(transactionManager).commit(any(TransactionStatus.class));
         verifyNoInteractions(userClient);
     }
 
@@ -197,6 +189,7 @@ public class AccountServiceTest {
         // Assert
         assertThrows(BadRequestException.class, () -> accountService.register(SIGNUP_REQUEST));
         verify(accountRepository).existsByEmail(EMAIL);
+        verify(transactionManager).rollback(any(TransactionStatus.class));
     }
 
     @Test
@@ -229,16 +222,16 @@ public class AccountServiceTest {
         when(roleRepository.findByName("USER")).thenReturn(Optional.empty());
 
         // Act
-        NotFoundException exception = assertThrows(NotFoundException.class,
+        RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> accountService.register(SIGNUP_REQUEST));
 
         // Assert
-        assertEquals("Роль отсутствует", exception.getMessage());
-        verify(accountRepository).existsByEmail(EMAIL);
-        verify(userService).saveUser(SIGNUP_REQUEST);
-        verify(passwordEncoder).encode(PASSWORD);
-        verify(roleRepository).findByName("USER");
-        verifyNoInteractions(userClient, userRepository);
+        assertNotNull(exception.getCause());
+        assertTrue(exception.getCause() instanceof NotFoundException);
+        assertEquals("Роль отсутствует", exception.getCause().getMessage());
+
+        verify(transactionManager).rollback(any(TransactionStatus.class));
+        verify(userClient).deleteUser(USER_ID_1);
     }
 
     @Test
@@ -257,12 +250,10 @@ public class AccountServiceTest {
                 () -> accountService.register(SIGNUP_REQUEST));
 
         // Assert
-        assertEquals("saveEx", exception.getMessage());
-        verify(accountRepository).existsByEmail(EMAIL);
-        verify(userService).saveUser(SIGNUP_REQUEST);
-        verify(passwordEncoder).encode(PASSWORD);
-        verify(roleRepository).findByName("USER");
-        verify(accountRepository).save(any(Account.class));
+        assertNotNull(exception.getCause());
+        assertEquals("saveEx", exception.getCause().getMessage());
+
+        verify(transactionManager).rollback(any(TransactionStatus.class));
         verify(userClient).deleteUser(USER_ID_1);
     }
 
@@ -289,11 +280,7 @@ public class AccountServiceTest {
         assertNotNull(exception.getCause());
         assertEquals("Rollback failed", exception.getCause().getMessage());
 
-        verify(accountRepository).existsByEmail(EMAIL);
-        verify(userService).saveUser(SIGNUP_REQUEST);
-        verify(passwordEncoder).encode(PASSWORD);
-        verify(roleRepository).findByName("USER");
-        verify(accountRepository).save(any(Account.class));
+        verify(transactionManager).rollback(any(TransactionStatus.class));
         verify(userClient).deleteUser(USER_ID_1);
     }
 

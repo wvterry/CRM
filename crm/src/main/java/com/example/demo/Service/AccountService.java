@@ -24,7 +24,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -48,7 +51,7 @@ public class AccountService {
     private final UserService userService;
     private final TaskService taskService;
     private final ClientService clientService;
-    private final TransactionTemplate transactionTemplate;
+    private PlatformTransactionManager transactionManager;
 
     @Autowired
     public AccountService(AccountRepository accountRepository,
@@ -61,7 +64,7 @@ public class AccountService {
                           UserService userService,
                           TaskService taskService,
                           ClientService clientService,
-                          TransactionTemplate transactionTemplate) {
+                          PlatformTransactionManager transactionManager) {
         this.accountRepository = accountRepository;
         this.userClient = userClient;
         this.passwordEncoder = passwordEncoder;
@@ -72,18 +75,22 @@ public class AccountService {
         this.userService = userService;
         this.taskService = taskService;
         this.clientService = clientService;
-        this.transactionTemplate = transactionTemplate;
+        this.transactionManager = transactionManager;
     }
 
     public void register(SignupRequest signupRequest) throws BadRequestException {
-        if (accountRepository.existsByEmail(signupRequest.getEmail())) {
-            throw new BadRequestException(
-                    "Аккаунт с email " + signupRequest.getEmail() + " уже зарегистрирован"
-            );
-        }
-        User user = userService.saveUser(signupRequest);
+        TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
 
-        transactionTemplate.executeWithoutResult(status -> {
+        User user = null;
+        try {
+            if (accountRepository.existsByEmail(signupRequest.getEmail())) {
+                throw new BadRequestException(
+                        "Аккаунт с email " + signupRequest.getEmail() + " уже зарегистрирован"
+                );
+            }
+
+            user = userService.saveUser(signupRequest);
+
             String password = passwordEncoder.encode(signupRequest.getPassword());
             Set<Role> roles = new HashSet<>();
             Role accountRole = roleRepository.findByName("USER").orElseThrow(
@@ -97,32 +104,29 @@ public class AccountService {
             accountToSave.setRoles(roles);
             accountToSave.setUser(user);
             accountToSave.setCreatedAt(LocalDateTime.now());
+            accountRepository.save(accountToSave);
 
-            try {
-                accountRepository.save(accountToSave);
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                    @Override
-                    public void afterCommit() {
-                        log.info("Аккаунт успешно зарегистрирован: {}", accountToSave.getEmail());
-                    }
-                });
-            } catch (Exception saveEx) {
-                if (user.getUserId() != null) {
-                    try {
-                        userClient.deleteUser(user.getUserId());
-                    } catch (Exception roleBackEx) {
-                        throw new IllegalStateException(
-                                "Не удалось удалить пользователя с id " + user.getUserId() +
-                                        ". Обратитесь к администратору", roleBackEx
-                        );
-                    }
+            transactionManager.commit(status);
+
+        } catch (BadRequestException e) {
+            transactionManager.rollback(status);
+            throw e;
+        } catch (Exception e) {
+            transactionManager.rollback(status);
+
+            if (e instanceof RuntimeException && user != null) {
+                try {
+                    userClient.deleteUser(user.getUserId());
+                } catch (Exception roleBackEx) {
+                    throw new IllegalStateException(
+                            "Не удалось удалить пользователя с id " + user.getUserId() +
+                                    ". Обратитесь к администратору", roleBackEx
+                    );
                 }
-                throw saveEx;
             }
-        });
+            throw new RuntimeException(e);
+        }
     }
-
-
 
     @Transactional(readOnly = true)
     public String authenticate(AuthRequest authRequest) {
